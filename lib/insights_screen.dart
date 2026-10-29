@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'app_state.dart';
 import 'domain.dart';
+import 'ethiopian_date.dart';
 import 'health_score.dart';
 import 'strings.dart';
 import 'theme.dart';
@@ -117,6 +118,10 @@ class InsightsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
+        SectionHeading(t(lang, 'cashFlowTrend')),
+        const SizedBox(height: 10),
+        BirrCard(child: _CashFlowChart(state: state)),
+        const SizedBox(height: 20),
         SectionHeading(t(lang, 'scoreHowMade')),
         const SizedBox(height: 9),
         BirrCard(
@@ -222,6 +227,92 @@ class InsightsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Income and spending side by side for the last four months.
+class _CashFlowChart extends StatelessWidget {
+  const _CashFlowChart({required this.state});
+
+  final AppState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = state.language;
+    final months = [
+      for (var ago = 3; ago >= 0; ago--)
+        (
+          label: monthLabel(state.monthBounds(ago).start,
+              ethiopian: state.useEthiopianCalendar, language: lang),
+          income: state.monthTotal(EntryType.income, ago),
+          expense: state.monthTotal(EntryType.expense, ago),
+        ),
+    ];
+    final highest = months.fold<int>(
+        1, (top, m) => math.max(top, math.max(m.income, m.expense)));
+    Widget bar(int value, Color color) => Container(
+          width: 14,
+          height: 4 + 96 * value / highest,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+          ),
+        );
+    return Column(
+      children: [
+        SizedBox(
+          height: 128,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              for (final month in months)
+                Semantics(
+                  label: state.hideBalances
+                      ? month.label
+                      : '${month.label}: ${t(lang, 'income')} '
+                          '${formatEtb(month.income)}, ${t(lang, 'expenses')} '
+                          '${formatEtb(month.expense)}',
+                  excludeSemantics: true,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          bar(month.income, BirrColors.income),
+                          const SizedBox(width: 4),
+                          bar(month.expense, BirrColors.goldDecor),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        month.label.characters.take(3).toString(),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (final (color, key) in [
+              (BirrColors.income, 'income'),
+              (BirrColors.goldDecor, 'expenses'),
+            ]) ...[
+              Container(width: 10, height: 10, color: color),
+              const SizedBox(width: 6),
+              Text(t(lang, key), style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(width: 16),
+            ],
+          ],
+        ),
       ],
     );
   }

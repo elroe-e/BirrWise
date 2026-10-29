@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_state.dart';
+import 'device.dart';
 import 'domain.dart';
 import 'ethiopian_date.dart';
+import 'sms_parser.dart';
 import 'strings.dart';
 import 'widgets.dart';
 
@@ -45,14 +47,7 @@ Future<bool> showAddAccountDialog(BuildContext context, AppState state) async {
                 initialValue: institution,
                 decoration: InputDecoration(
                     labelText: t(state.language, 'institution')),
-                items: const [
-                  'Cash',
-                  'Telebirr',
-                  'CBE',
-                  'Awash',
-                  'BOA',
-                  'Dashen',
-                ]
+                items: ['Cash', ...SmsParser.institutions]
                     .map((value) =>
                         DropdownMenuItem(value: value, child: Text(value)))
                     .toList(),
@@ -163,6 +158,7 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
   late String accountId;
   late String toAccountId;
   bool saving = false;
+  bool business = false;
   String? error;
 
   @override
@@ -271,6 +267,14 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                 selected: category,
                 onSelected: (value) => setState(() => category = value),
               ),
+              if (state.merchantMode)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: const Icon(Icons.storefront_outlined),
+                  title: Text(t(lang, 'businessEntry')),
+                  value: business,
+                  onChanged: (value) => setState(() => business = value),
+                ),
             ],
             const SizedBox(height: 14),
             TextField(
@@ -340,9 +344,12 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                               category: category,
                               party: noteController.text,
                               date: date,
+                              business: business,
                             );
                           }
-                          await confirmFeedback(state);
+                          final cash = state.accounts
+                              .any((a) => a.id == accountId && a.institution == 'Cash');
+                          await confirmFeedback(state, cash ? 'cash' : 'chime');
                           if (context.mounted) Navigator.pop(context, true);
                         } on ArgumentError catch (e) {
                           setState(() {
@@ -605,9 +612,9 @@ Future<void> showAddBillDialog(BuildContext context, AppState state) async {
   dueDay.dispose();
 }
 
-Future<void> confirmFeedback(AppState state) async {
+Future<void> confirmFeedback(AppState state, [String sound = 'chime']) async {
   if (state.hapticsEnabled) await HapticFeedback.selectionClick();
-  if (state.soundEnabled) await SystemSound.play(SystemSoundType.click);
+  await playSound(state, sound);
 }
 
 extension<T> on Iterable<T> {

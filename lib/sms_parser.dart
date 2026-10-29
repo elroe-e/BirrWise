@@ -50,13 +50,28 @@ class ParsedSms {
 
 class SmsParser {
   // Keep in sync with BankSmsInbox.trustedSenders on the Android side.
+  // Wallets are separate from their bank: each reports its own balance, and
+  // one account per institution is matched to it.
   static const _trustedSenders = <String, Set<String>>{
     'Telebirr': {'127', 'telebirr', 'telebirrsc'},
-    'CBE': {'cbe', 'cbebirr'},
+    'CBE': {'cbe'},
+    'CBE Birr': {'cbebirr'},
     'Awash': {'awash', 'awashbank', 'awashbanksc'},
+    'Awash Birr': {'awashbirr'},
     'BOA': {'boa', 'abyssinia', 'bankofabyssinia'},
     'Dashen': {'dashen', 'dashenbank'},
+    'Amole': {'amole'},
+    'M-PESA': {'mpesa'},
+    'Coopay': {'coopay', 'ebirr'},
+    'Coop Bank': {'coopbank'},
+    'Berhan': {'berhan', 'berhanbank'},
+    'Bunna': {'bunna', 'bunnabank'},
+    'Hibret': {'hibret', 'hibretbank', 'unitedbank'},
+    'Ahadu': {'ahadu', 'ahadubank'},
   };
+
+  /// Every bank and wallet whose alerts BirrWise reads.
+  static Iterable<String> get institutions => _trustedSenders.keys;
 
   static const _number = r'([0-9][0-9,]*(?:\.[0-9]{1,2})?)';
 
@@ -88,23 +103,26 @@ class SmsParser {
   );
 
   static final _income = RegExp(
-    r'\b(receiv(?:ed|e)|credit(?:ed)?|deposit(?:ed)?|cash[\s-]*in|top[\s-]*up)\b|ገቢ|ገብቷል|ተቀበሉ',
+    r'\b(receiv(?:ed|e)|credit(?:ed)?|deposit(?:ed)?|cash[\s-]*in|top[\s-]*up)\b|ገቢ|ገብቷል|ተቀበሉ|ተቀብለዋል',
     caseSensitive: false,
   );
   static final _expense = RegExp(
-    r'\b(paid|debit(?:ed)?|transferred|sent|withdraw(?:n|al)?|purchase|bought|airtime|cash[\s-]*out|bill[\s-]*pay)\b|ወጪ|ተቀንሷል|ወጥቷል|ከፍለዋል',
+    r'\b(paid|debit(?:ed)?|transferred|sent|withdraw(?:n|al)?|purchase|bought|airtime|cash[\s-]*out|bill[\s-]*pay)\b|ወጪ|ተቀንሷል|ወጥቷል|ከፍለዋል|ተከፍሏል|ተላልፏል',
     caseSensitive: false,
   );
 
   // The label may be followed by "is", ":" or "#" before the value, and the
   // value itself must look like a real reference (6+ characters with a digit).
+  // Dart's \b only knows ASCII letters, so the Amharic label sits outside it.
   static final _reference = RegExp(
-    r'\b(?:transaction\s*(?:id|number|no\.?|ref(?:erence)?)'
+    r'(?:\b(?:transaction\s*(?:id|number|no\.?|ref(?:erence)?)'
     r'|txn\s*(?:id|no\.?)?'
-    r'|trans\.?\s*ref(?:erence)?'
+    r'|trans\.?\s*(?:id|ref(?:erence)?)'
+    r'|m-?pesa\s*id'
     r'|ref(?:erence)?\s*(?:id|no\.?|number)?'
     r'|receipt\s*(?:id|no\.?|number)?)(?![A-Za-z])'
-    r'\s*(?:is\s+|[:#\-]\s*)?([A-Za-z0-9]{6,})\b',
+    r'|የማጣቀሻ\s*ቁጥር)'
+    r'\s*(?:is\s+|[:#\-፡]\s*)?([A-Za-z0-9]{6,})\b',
     caseSensitive: false,
   );
   // CBE debit alerts only carry the FT reference inside the receipt link.
@@ -120,16 +138,17 @@ class SmsParser {
     caseSensitive: false,
   );
 
-  static ParsedSms? parse(String sender, String body) {
-    final normalizedSender =
-        sender.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
-    String? institution;
+  /// The bank or wallet a sender ID belongs to, or null if it is not trusted.
+  static String? institutionFor(String sender) {
+    final normalized = sender.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
     for (final entry in _trustedSenders.entries) {
-      if (entry.value.contains(normalizedSender)) {
-        institution = entry.key;
-        break;
-      }
+      if (entry.value.contains(normalized)) return entry.key;
     }
+    return null;
+  }
+
+  static ParsedSms? parse(String sender, String body) {
+    final institution = institutionFor(sender);
     if (institution == null) return null;
     if (_codeDelivery.hasMatch(body)) return null;
 
@@ -161,8 +180,9 @@ class SmsParser {
       if (!unique.any((item) => item.start == value.start)) unique.add(value);
     }
 
+    // ቀሪ ("remaining"), not ሒሳብ: "ሒሳብ ቁጥር" is the account number label.
     bool isBalance(String label) =>
-        RegExp(r'\b(balance|bal|remaining|available)\b').hasMatch(label);
+        RegExp(r'\b(balance|bal|remaining|available)\b|ቀሪ').hasMatch(label);
     bool isFee(String label) =>
         RegExp(r'\b(charge|fee|vat|tax|commission|limit)\b').hasMatch(label);
     final balance = unique.where((item) => isBalance(item.label)).lastOrNull;

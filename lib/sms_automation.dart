@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_state.dart';
+import 'device.dart';
 import 'domain.dart';
 import 'strings.dart';
 
@@ -76,6 +78,7 @@ class SmsAutomationService {
       messages.addAll(incoming);
 
       final summary = await state.ingestBankSms(messages);
+      if (summary.imported > 0) unawaited(playSound(state, 'sms'));
       if (!state.smsHistoryScanned) await state.markSmsHistoryScanned();
       await _clearIncomingBankSms(
           incoming.map((message) => message.id).toList());

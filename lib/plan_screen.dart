@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'budget_loans.dart';
 import 'dialogs.dart';
 import 'domain.dart';
 import 'strings.dart';
@@ -38,6 +40,8 @@ class _PlanScreenState extends State<PlanScreen> {
             segments: [
               ButtonSegment(value: 0, label: Text(t(lang, 'goals'))),
               ButtonSegment(value: 1, label: Text(t(lang, 'bills'))),
+              ButtonSegment(value: 2, label: Text(t(lang, 'budget'))),
+              ButtonSegment(value: 3, label: Text(t(lang, 'loans'))),
             ],
             selected: {selected},
             onSelectionChanged: (value) =>
@@ -46,8 +50,12 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
         ),
         Expanded(
-          child:
-              selected == 0 ? _goals(context, state) : _bills(context, state),
+          child: switch (selected) {
+            0 => _goals(context, state),
+            1 => _bills(context, state),
+            2 => BudgetView(state: state),
+            _ => LoansView(state: state),
+          },
         ),
       ],
     );
@@ -291,6 +299,7 @@ class _PlanScreenState extends State<PlanScreen> {
                       return;
                     }
                     await state.depositToGoal(goal.id, accountId, amount);
+                    unawaited(confirmFeedback(state, 'goal'));
                     if (context.mounted) Navigator.pop(context);
                   },
                   child: Text(t(state.language, 'deposit')),

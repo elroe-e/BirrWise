@@ -234,21 +234,7 @@ class _AccountCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      account.institution.substring(0, 1).toUpperCase(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                    ),
-                  ),
+                  InstitutionBadge(account.institution, radius: 18),
                   const Spacer(),
                   Text(account.institution,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(

@@ -125,14 +125,14 @@ const _strings = <String, Map<String, String>>{
     'smsScanNow': 'Scan bank alerts now',
     'smsPermissionTitle': 'Allow on-device bank alert scanning?',
     'smsPermissionBody':
-        'Android requires SMS access to scan messages. BirrWise checks only supported bank senders and keeps messages on this phone. A clear alert is added automatically only when exactly one account matches and it arrived after you added that account and turned tracking on. Older or unclear alerts stay in review; unrelated messages are ignored.',
+        'Android requires SMS access to scan messages. BirrWise checks only supported bank senders and keeps messages on this phone. Each clear alert is added automatically to the account for its bank, which BirrWise creates if needed, and the account follows the balance your bank reports. Unclear alerts stay in review; unrelated messages are ignored.',
     'smsPermissionContinue': 'Continue',
     'smsImportSummary':
         'Checked {scanned} bank alerts: {recognized} recognized, {imported} added, {pending} for review, {ignored} not recognized, {duplicates} already seen.',
     'smsNoBankSenders':
         'No messages from a supported bank sender were found. Check that bank alerts are in your SMS inbox and try again.',
     'smsHistoryOnce':
-        'Bank alerts from the last 30 days are checked once when you turn this on. They wait in review, so nothing you already entered is counted twice.',
+        'Bank alerts from the last 30 days are checked once when you turn this on and added to your accounts. Each account then matches the balance your bank last reported.',
     'undo': 'Undo',
     'yesterday': 'Yesterday',
     'cancel': 'Cancel',
@@ -194,6 +194,152 @@ const _strings = <String, Map<String, String>>{
         'Some bank messages have waited more than 3 days for review.',
     'recAllGood': 'Nothing needs attention this month. Keep going.',
     'reviewBills': 'Review bills',
+    'businessEntry':
+        'Business (shop) money',
+    'testCash':
+        'Cash',
+    'testGoal':
+        'Goal',
+    'budget':
+        'Budget',
+    'loans':
+        'Loans',
+    'monthlyTarget':
+        'Monthly target',
+    'edit':
+        'Edit',
+    'targetIncome':
+        'Income target',
+    'plannedSpending':
+        'Planned spending',
+    'categoryBudgets':
+        'Category budgets',
+    'noBudgets':
+        'No budgets yet. Add a monthly limit for a category to track it here.',
+    'setBudget':
+        'Set budget',
+    'monthlyLimit':
+        'Monthly limit',
+    'remove':
+        'Remove',
+    'loansHint':
+        'Keep track of money you lent to people or borrowed from them.',
+    'addLoan':
+        'Add a loan',
+    'owedToYou':
+        'Owed to you',
+    'youOwe':
+        'You owe',
+    'settled':
+        'Settled',
+    'lent':
+        'Lent',
+    'borrowed':
+        'Borrowed',
+    'left':
+        'left',
+    'recordPayment':
+        'Record a repayment',
+    'markSettled':
+        'Mark settled',
+    'delete':
+        'Delete',
+    'amountLabel':
+        'Amount',
+    'personName':
+        'Name',
+    'loanInvalid':
+        'Enter a name and an amount.',
+    'csvSub':
+        'Save the ledger as a spreadsheet',
+    'backup':
+        'Backup',
+    'backupSub':
+        'Save or restore a backup file',
+    'merchantMode':
+        'Shop mode',
+    'merchantModeSub':
+        'Tag business money separately from household spending.',
+    'saveBackup':
+        'Save a backup file',
+    'restoreBackup':
+        'Restore a backup',
+    'backupWarning':
+        'Backup files are not encrypted. Keep them somewhere private.',
+    'restoreConfirm':
+        'Everything in BirrWise will be replaced by the backup. Your settings and PIN stay as they are.',
+    'restoreDone':
+        'Backup restored.',
+    'restoreInvalid':
+        'That file is not a BirrWise backup. Nothing was changed.',
+    'fileFailed':
+        'The file could not be used. Try again.',
+    'fileSaved':
+        'File saved.',
+    'monitoredBanks':
+        'Banks and wallets to watch',
+    'monitoredBanksCount':
+        '{count} selected',
+    'security':
+        'Security',
+    'pinLock':
+        'App lock (PIN)',
+    'pinOn':
+        'On. BirrWise asks for your PIN when you come back to it.',
+    'pinOff':
+        'Off',
+    'privacyPolicy':
+        'Privacy policy',
+    'eraseAll':
+        'Erase all data',
+    'pinEnter':
+        'Enter your 4-digit PIN',
+    'pinForgetWarning':
+        'If you forget it, you will have to clear the BirrWise storage in Android settings, which erases everything.',
+    'pinRemoveConfirm':
+        'Turn off the PIN lock?',
+    'turnOff':
+        'Turn off',
+    'eraseConfirm':
+        'This erases every account, transaction, plan and setting on this phone and turns SMS tracking off. It cannot be undone. Save a backup first if you may need it.',
+    'eraseEverything':
+        'Erase everything',
+    'erased':
+        'All BirrWise data was erased.',
+    'privacyPolicyBody':
+        '1. Everything stays on this phone. BirrWise has no account, no server and no analytics, and it sends nothing anywhere.\n\n2. SMS access is used only to find transactions in alerts from the banks and wallets you keep ticked in Settings. Personal messages are never read or saved.\n\n3. Clear alerts are added to your accounts automatically; unclear ones wait for you in the SMS inbox. Turning tracking off in Settings stops it at once.\n\n4. Backups and CSV exports are saved only where you choose. They are not encrypted, so keep those files private.\n\n5. Android backup is turned off for BirrWise data. Erase all data in Settings removes everything.\n\n6. Google Play restricts SMS permissions, so this build is meant to be installed directly.',
+    'understood':
+        'I understand',
+    'pinWrong':
+        'Incorrect PIN. Try again.',
+    'welcomeTitle':
+        'Welcome to BirrWise',
+    'welcomeSubtitle':
+        'Your private, offline money companion for Ethiopia.',
+    'chooseLanguage':
+        'Choose your language',
+    'privacyFirstHeading':
+        'Offline and private',
+    'privacyFirstBody':
+        'Your bank and wallet messages never leave this phone. Everything is worked out on your device.',
+    'cashFlowTrend':
+        'Income and spending, last 4 months',
+    'editAmount':
+        'Change amount',
+    'pinAgain':
+        'Enter it again',
+    'pinMismatch':
+        'The two PINs are different.',
+    'shopTag':
+        'Shop',
+    'banksTitle':
+        'Which banks and wallets are yours?',
+    'banksBody':
+        'BirrWise reads alerts only from the ones you tick. Alerts from the others are ignored, and anything already added from them is taken out. You can change this later in Settings.',
+    'alertsFound':
+        'Alerts found: {count}',
+    'done':
+        'Done',
   },
   'am': {
     'home': 'ዋና ገጽ',
@@ -315,14 +461,14 @@ const _strings = <String, Map<String, String>>{
     'smsScanNow': 'የባንክ መልዕክቶችን አሁን ፈትሽ',
     'smsPermissionTitle': 'የባንክ መልዕክቶችን በዚህ ስልክ ፈትሽ?',
     'smsPermissionBody':
-        'Android የSMS ፈቃድ ይፈልጋል። BirrWise የተመረጡ የባንክ ላኪዎችን ብቻ ይፈትሻል፤ መልዕክቶች ከዚህ ስልክ አይወጡም። ግልጽ መልዕክት በራሱ የሚመዘገበው አንድ ተዛማጅ ሂሳብ ሲኖርና ሂሳቡን ካከሉና ክትትሉን ካበሩ በኋላ ሲደርስ ብቻ ነው። የቆዩ ወይም ግልጽ ያልሆኑ መልዕክቶች ለክለሳ ይቀመጣሉ፤ የማይዛመዱ መልዕክቶች ይተዋሉ።',
+        'Android የSMS ፈቃድ ይፈልጋል። BirrWise የተመረጡ የባንክ ላኪዎችን ብቻ ይፈትሻል፤ መልዕክቶች ከዚህ ስልክ አይወጡም። ግልጽ መልዕክት ወደ ባንኩ ሂሳብ በራሱ ይመዘገባል፤ ሂሳብ ከሌለ ይፈጠራል፣ ቀሪ ሂሳቡም ባንኩ ከሚያሳውቀው ጋር ይስተካከላል። ግልጽ ያልሆኑ መልዕክቶች ለክለሳ ይቀመጣሉ፤ የማይዛመዱ መልዕክቶች ይተዋሉ።',
     'smsPermissionContinue': 'ቀጥል',
     'smsImportSummary':
         '{scanned} የባንክ መልዕክቶች ተፈትሸዋል: {recognized} ተለይተዋል፣ {imported} ተጨምረዋል፣ {pending} ክለሳ ይፈልጋሉ፣ {ignored} አልተለዩም፣ {duplicates} ቀድሞ ታይተዋል።',
     'smsNoBankSenders':
         'የተመረጠ የባንክ ላኪ መልዕክት አልተገኘም። የባንክ SMS በinbox ውስጥ መኖሩን ያረጋግጡና እንደገና ይሞክሩ።',
     'smsHistoryOnce':
-        'ሲያበሩት ያለፉት 30 ቀናት የባንክ መልዕክቶች አንድ ጊዜ ይፈተሻሉ። ቀድመው ያስገቡት ሁለት ጊዜ እንዳይቆጠር ለክለሳ ይቀመጣሉ።',
+        'ሲያበሩት ያለፉት 30 ቀናት የባንክ መልዕክቶች አንድ ጊዜ ተፈትሸው ወደ ሂሳቦችዎ ይጨመራሉ። ከዚያ እያንዳንዱ ሂሳብ ባንኩ በመጨረሻ ካሳወቀው ቀሪ ሂሳብ ጋር ይስተካከላል።',
     'undo': 'ቀልብስ',
     'yesterday': 'ትናንት',
     'cancel': 'ተወው',
@@ -381,6 +527,152 @@ const _strings = <String, Map<String, String>>{
     'recOldPending': 'አንዳንድ የባንክ መልዕክቶች ከ3 ቀናት በላይ ክለሳ እየጠበቁ ነው።',
     'recAllGood': 'በዚህ ወር ትኩረት የሚፈልግ ነገር የለም። በዚሁ ይቀጥሉ።',
     'reviewBills': 'ክፍያዎችን ይመልከቱ',
+    'businessEntry':
+        'የንግድ (የሱቅ) ገንዘብ',
+    'testCash':
+        'ጥሬ ገንዘብ',
+    'testGoal':
+        'ግብ',
+    'budget':
+        'በጀት',
+    'loans':
+        'ብድሮች',
+    'monthlyTarget':
+        'የወሩ አጠቃላይ ግብ',
+    'edit':
+        'አስተካክል',
+    'targetIncome':
+        'የታለመ ወርሃዊ ገቢ',
+    'plannedSpending':
+        'የታቀደ ወርሃዊ ወጪ ገደብ',
+    'categoryBudgets':
+        'የምድብ በጀት ወሰኖች',
+    'noBudgets':
+        'እስካሁን በጀት የለም። ለአንድ ምድብ ወርሃዊ ገደብ ያክሉና እዚህ ይከታተሉ።',
+    'setBudget':
+        'በጀት ወስን',
+    'monthlyLimit':
+        'የወሩ ገደብ',
+    'remove':
+        'አስወግድ',
+    'loansHint':
+        'ለሰው ያበደሩትንና ከሰው የተበደሩትን ገንዘብ ይከታተሉ።',
+    'addLoan':
+        'ብድር መዝግብ',
+    'owedToYou':
+        'ሊከፈልዎ የሚገባ',
+    'youOwe':
+        'የሚከፍሉት',
+    'settled':
+        'ተከፍሎ አልቋል',
+    'lent':
+        'ያበደሩት',
+    'borrowed':
+        'የተበደሩት',
+    'left':
+        'ቀርቷል',
+    'recordPayment':
+        'ክፍያ መዝግብ',
+    'markSettled':
+        'እንደተከፈለ ምልክት አድርግ',
+    'delete':
+        'ሰርዝ',
+    'amountLabel':
+        'የገንዘብ መጠን',
+    'personName':
+        'የሰውየው ስም',
+    'loanInvalid':
+        'ስምና የገንዘብ መጠን ያስገቡ።',
+    'csvSub':
+        'የግብይት ዝርዝሩን እንደ ፋይል ያስቀምጡ',
+    'backup':
+        'የመረጃ ቅጂ',
+    'backupSub':
+        'ቅጂ ያስቀምጡ ወይም ይመልሱ',
+    'merchantMode':
+        'የነጋዴ / ሱቅ ሁነታ',
+    'merchantModeSub':
+        'የንግድ ገቢና ወጪዎችን ከግል ኑሮ ወጪዎች ይለያል።',
+    'saveBackup':
+        'የመረጃ ቅጂ ፋይል አስቀምጥ',
+    'restoreBackup':
+        'የቀድሞ መረጃን መልስ',
+    'backupWarning':
+        'የመረጃ ቅጂ ፋይሎች አልተመሰጠሩም። በሚስጥር ቦታ ያስቀምጧቸው።',
+    'restoreConfirm':
+        'በብርዋይዝ ያለው መረጃ በሙሉ በቅጂው ይተካል። ቅንብሮችዎና ፒንዎ እንዳሉ ይቆያሉ።',
+    'restoreDone':
+        'መረጃዎች በተሳካ ሁኔታ ተመልሰዋል።',
+    'restoreInvalid':
+        'ፋይሉ ትክክለኛ የብርዋይዝ ቅጂ አይደለም። ምንም አልተቀየረም።',
+    'fileFailed':
+        'ፋይሉን መጠቀም አልተቻለም። እንደገና ይሞክሩ።',
+    'fileSaved':
+        'ፋይሉ ተቀምጧል።',
+    'monitoredBanks':
+        'ክትትል የሚደረግባቸው ባንኮች እና ዋሌቶች',
+    'monitoredBanksCount':
+        '{count} ተመርጠዋል',
+    'security':
+        'ደህንነት',
+    'pinLock':
+        'የፒን ኮድ (PIN) መቆለፊያ',
+    'pinOn':
+        'በርቷል። ወደ ብርዋይዝ ሲመለሱ ፒን ይጠይቃል።',
+    'pinOff':
+        'ጠፍቷል',
+    'privacyPolicy':
+        'የግላዊነት ፖሊሲ',
+    'eraseAll':
+        'ሁሉንም መረጃዎች ሰርዝ',
+    'pinEnter':
+        'የ4-አሃዝ ፒን ኮድዎን ያስገቡ',
+    'pinForgetWarning':
+        'ከረሱት በAndroid ቅንብሮች ውስጥ የብርዋይዝን ማከማቻ ማጽዳት ይኖርብዎታል፤ ይህም ሁሉንም መረጃ ያጠፋል።',
+    'pinRemoveConfirm':
+        'የፒን መቆለፊያውን ላጥፋ?',
+    'turnOff':
+        'አጥፋ',
+    'eraseConfirm':
+        'ይህ በዚህ ስልክ ያሉትን ሂሳቦች፣ ግብይቶች፣ እቅዶችና ቅንብሮች በሙሉ ያጠፋል፤ የSMS ክትትልንም ያጠፋል። ሊመለስ አይችልም። ካስፈለገዎ መጀመሪያ የመረጃ ቅጂ ያስቀምጡ።',
+    'eraseEverything':
+        'ሁሉንም አጥፋ',
+    'erased':
+        'መረጃዎች በሙሉ ጠፍተዋል።',
+    'privacyPolicyBody':
+        '1. ሁሉም መረጃ በዚህ ስልክ ላይ ብቻ ይቀመጣል። ብርዋይዝ መለያ፣ ሰርቨር ወይም የአጠቃቀም ክትትል የለውም፤ ምንም ነገር ወደ ውጭ አይልክም።\n\n2. የSMS ፈቃድ የሚውለው በቅንብሮች ውስጥ ከመረጧቸው ባንኮችና ዋሌቶች የሚመጡ መልዕክቶችን ግብይት ለመለየት ብቻ ነው። የግል መልዕክቶች አይነበቡም፣ አይቀመጡም።\n\n3. ግልጽ መልዕክቶች በራሳቸው ወደ ሂሳቦችዎ ይመዘገባሉ፤ ግልጽ ያልሆኑት በSMS መልዕክቶች ውስጥ እርስዎን ይጠብቃሉ። በቅንብሮች ውስጥ ክትትሉን ሲያጠፉ ወዲያውኑ ይቆማል።\n\n4. የመረጃ ቅጂዎችና የCSV ፋይሎች እርስዎ በመረጡት ቦታ ብቻ ይቀመጣሉ። አልተመሰጠሩም፤ ስለዚህ ፋይሎቹን በሚስጥር ይያዙ።\n\n5. የAndroid ምትኬ ለብርዋይዝ መረጃ ጠፍቷል። በቅንብሮች ውስጥ «ሁሉንም መረጃዎች ሰርዝ» ሁሉንም ያጠፋል።\n\n6. Google Play የSMS ፈቃዶችን ይገድባል፤ ይህ ስሪት በቀጥታ ለመጫን የተዘጋጀ ነው።',
+    'understood':
+        'ተረድቻለሁ',
+    'pinWrong':
+        'የተሳሳተ ፒን ኮድ። እንደገና ይሞክሩ።',
+    'welcomeTitle':
+        'እንኳን ወደ ብርዋይዝ በደህና መጡ',
+    'welcomeSubtitle':
+        'የእርስዎን የገንዘብ እንቅስቃሴ ያለ ኢንተርኔት በከፍተኛ ሚስጥራዊነት የሚከታተል መተግበሪያ።',
+    'chooseLanguage':
+        'ቋንቋ ይምረጡ',
+    'privacyFirstHeading':
+        'ሙሉ በሙሉ በስልክዎ ላይ ብቻ የሚቀመጥ',
+    'privacyFirstBody':
+        'የባንክ እና የቴሌብር መልዕክቶችዎ ከስልክዎ ውጪ ወደ የትኛውም ሰርቨር አይላኩም። ሁሉም ስሌት በስልክዎ ውስጥ ብቻ ይከናወናል።',
+    'cashFlowTrend':
+        'የገንዘብ ፍሰት (ያለፉት 4 ወራት)',
+    'editAmount':
+        'መጠኑን ቀይር',
+    'pinAgain':
+        'እንደገና ያስገቡ',
+    'pinMismatch':
+        'ሁለቱ ፒኖች አይመሳሰሉም።',
+    'shopTag':
+        'ሱቅ',
+    'banksTitle':
+        'የእርስዎ የትኞቹ ባንኮችና ዋሌቶች ናቸው?',
+    'banksBody':
+        'ብርዋይዝ መልዕክቶችን የሚያነበው ከመረጧቸው ብቻ ነው። ከሌሎቹ የሚመጡ መልዕክቶች ይተዋሉ፤ ከእነሱ ቀድሞ የተመዘገበውም ይወገዳል። በኋላ በቅንብሮች ውስጥ መቀየር ይችላሉ።',
+    'alertsFound':
+        'የተገኙ መልዕክቶች: {count}',
+    'done':
+        'ጨርሻለሁ',
   },
 };
 

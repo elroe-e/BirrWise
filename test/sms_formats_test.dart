@@ -189,4 +189,90 @@ void main() {
     expect(r.amount, 50000);
     expect(r.direction, SmsDirection.expense);
   });
+
+  group('Amharic alerts', () {
+    test('Telebirr payment with balance and reference', () {
+      final r = SmsParser.parse(
+        '127',
+        'ክቡር ደንበኛ፣ ለ ቶሞካ ካፌ 250.00 ብር ተከፍሏል። የማጣቀሻ ቁጥር TXN8871234። '
+            'ቀሪ ሒሳብ 4,570.50 ብር ነው። ቴሌብርን ስለተጠቀሙ እናመሰግናለን!',
+      )!;
+      expect(r.direction, SmsDirection.expense);
+      expect(r.amount, 25000);
+      expect(r.balanceAfter, 457050);
+      expect(r.reference, 'TXN8871234');
+    });
+
+    test('CBE credit: the account number is not the balance', () {
+      final r = SmsParser.parse(
+        'CBE',
+        'ክቡር ደንበኛ፣ ሒሳብ ቁጥር 1000****4521 በ 28,500.00 ብር ገቢ ሆኗል። '
+            'የማጣቀሻ ቁጥር፡ FT2410294812። ቀሪ ሒሳብ፡ 46,740.00 ብር።',
+      )!;
+      expect(r.direction, SmsDirection.income);
+      expect(r.amount, 2850000);
+      expect(r.balanceAfter, 4674000);
+      expect(r.reference, 'FT2410294812');
+    });
+
+    test('CBE debit', () {
+      final r = SmsParser.parse(
+        'CBE',
+        'ክቡር ደንበኛ፣ ሒሳብ ቁጥር 1000****4521 በ 3,000.00 ብር ወጪ ሆኗል። '
+            'የማጣቀሻ ቁጥር፡ FT2409848123። ቀሪ ሒሳብ፡ 42,350.00 ብር።',
+      )!;
+      expect(r.direction, SmsDirection.expense);
+      expect(r.amount, 300000);
+      expect(r.balanceAfter, 4235000);
+    });
+  });
+
+  group('more banks and wallets', () {
+    test('CBE Birr is its own wallet, not the CBE bank account', () {
+      final r = SmsParser.parse(
+        'CBEBirr',
+        'You have successfully purchased airtime of ETB 100.00 for '
+            '0922334455. Trans ID: CB2481023. Current balance is ETB 840.00.',
+      )!;
+      expect(r.institution, 'CBE Birr');
+      expect(r.direction, SmsDirection.expense);
+      expect(r.amount, 10000);
+      expect(r.balanceAfter, 84000);
+      expect(r.reference, 'CB2481023');
+    });
+
+    test('M-PESA merchant payment', () {
+      final r = SmsParser.parse(
+        'M-PESA',
+        'Confirmed. You have paid ETB 650.00 to ADDIS MART. M-PESA ID: '
+            'MP7632910. Current balance is ETB 2,450.00.',
+      )!;
+      expect(r.institution, 'M-PESA');
+      expect(r.direction, SmsDirection.expense);
+      expect(r.party, 'ADDIS MART');
+      expect(r.reference, 'MP7632910');
+      expect(r.balanceAfter, 245000);
+    });
+
+    test('Coopay bill payment is recognized with its balance', () {
+      final r = SmsParser.parse(
+        'Coopay',
+        'Coopay-E-Birr: Transfer of ETB 380.00 for Addis Water & Sewerage '
+            'successful. Ref: CP994821. Bal: ETB 1,820.00.',
+      )!;
+      expect(r.institution, 'Coopay');
+      expect(r.amount, 38000);
+      expect(r.balanceAfter, 182000);
+    });
+
+    test('Hibret alerts from the old United Bank sender', () {
+      final r = SmsParser.parse(
+        'UnitedBank',
+        'Your account has been credited with ETB 2,000.00. Ref: HB1234567. '
+            'Available balance ETB 9,000.00.',
+      )!;
+      expect(r.institution, 'Hibret');
+      expect(r.direction, SmsDirection.income);
+    });
+  });
 }

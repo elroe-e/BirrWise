@@ -25,7 +25,9 @@ app on a connected Android device or emulator.
 On first open, BirrWise explains SMS scanning and asks whether to request
 Android's inbox and incoming-SMS permissions. You can decline and enable it
 later in **Settings → Auto-track bank SMS**. When enabled, it scans supported
-bank senders (Telebirr, CBE, Awash, BOA and Dashen). BirrWise only reads
+bank and wallet senders (Telebirr, CBE, CBE Birr, Awash, Awash Birr, BOA,
+Dashen, Amole, M-PESA, Coopay/E-Birr, Coop Bank, Berhan, Bunna, Hibret and
+Ahadu; untick any of them in Settings). BirrWise only reads
 messages from exact, allow-listed sender IDs for transaction parsing. It scans
 the existing inbox once, and **Scan bank alerts now** can explicitly rescan it.
 New alerts are checked when BirrWise opens or resumes.
@@ -35,14 +37,16 @@ No SMS content leaves the phone.
 The debug APK includes Android's `INTERNET` permission for Flutter development
 and debugging tools; the app itself makes no network requests.
 
-An alert is added without confirmation when its amount and direction are clear,
-exactly one non-archived account matches its institution, and it arrived after
-both that account was added and tracking was turned on; a reference is not
-required. Older alerts (the one-time scan covers the last 30 days) stay in the
-review inbox, because the opening balance or your manual entries probably
-already include them. Confirming an alert that reports a balance offers to
-match the account to it. Unknown or ambiguous transactions stay in the SMS
-review inbox; unrelated or unrecognized messages are ignored. Deduplication uses the transaction
+An alert is added without confirmation when its amount and direction are clear
+and exactly one non-archived account matches its institution; a reference is
+not required. A bank with no account yet gets one, named after the bank. The
+one-time scan covers the last 30 days. After each import, the account is
+matched to the balance in the newest alert that reports one, with any
+difference recorded as a balance adjustment, so older alerts never
+double-count an opening balance you typed. Confirming an alert by hand offers
+the same match. Alerts with an unclear direction, or for a bank with several
+accounts, stay in the SMS review inbox; unrelated or unrecognized messages are
+ignored. Deduplication uses the transaction
 reference when present and a local content/time fingerprint otherwise. Turning
 the feature off stops the receiver and clears its temporary incoming-message
 queue. Manual paste-and-review remains available and never automatically adds
@@ -63,7 +67,12 @@ Balances are stored in integer santim (100 santim = 1 ETB) and derived from
 opening balances plus ledger entries. SharedPreferences stores app data locally;
 this is app-private storage, not encrypted storage. Pending review alerts
 include their original SMS text so you can check their classification. CSV
-export copies the selected ledger data to the clipboard, which other apps may be able to access.
+exports and JSON backups (Hub → Backup) are saved to a file you pick with
+Android's file picker; they are not encrypted. Restoring a backup replaces the
+ledger and plan but keeps device settings and the PIN. Settings → Erase all
+data turns SMS tracking off and deletes everything. The optional 4-digit app
+lock stores only a salted hash of the PIN; a forgotten PIN means clearing the
+app's storage in Android settings.
 There is no cloud backup or network sync implemented. SharedPreferences data is
 not encrypted. Android backup and device-to-device transfer are disabled
 (`allowBackup="false"` plus data-extraction rules that exclude everything). The Ethiopian calendar changes

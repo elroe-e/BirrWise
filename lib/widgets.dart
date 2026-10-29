@@ -205,8 +205,8 @@ class HeroBalanceCard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: t(state.language,
-                    hidden ? 'showBalances' : 'hideBalances'),
+                tooltip:
+                    t(state.language, hidden ? 'showBalances' : 'hideBalances'),
                 onPressed: () =>
                     state.setPreference('hide', !state.hideBalances),
                 icon: Icon(
@@ -288,40 +288,43 @@ class _HeroStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 14, color: color),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: BirrColors.heroText.withValues(alpha: .75),
-                        ),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(end: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: BirrColors.heroText.withValues(alpha: .75),
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  formatEtb(value, hidden: hidden, withCode: false),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: color,
+                    fontFamily: 'serif',
+                    fontSize: 16,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                formatEtb(value, hidden: hidden),
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: color,
-                  fontFamily: 'serif',
-                  fontSize: 15,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
 }
@@ -352,13 +355,14 @@ class TransactionRow extends StatelessWidget {
     );
     final account =
         state.accounts.where((a) => a.id == entry.accountId).firstOrNull;
-    final subtitle = '${t(state.language, entry.category)} · $date'
+    final shop = entry.business ? '${t(state.language, 'shopTag')} · ' : '';
+    final subtitle = '$shop${t(state.language, entry.category)} · $date'
         '${account == null ? '' : ' · ${account.name}'}';
     final sign = isIncome ? '+' : '−';
     return Semantics(
       container: true,
       label:
-          '$title, ${t(state.language, entry.category)}, $date, $sign${formatEtb(amount, hidden: state.hideBalances)}',
+          '$title, $shop${t(state.language, entry.category)}, $date, $sign${formatEtb(amount, hidden: state.hideBalances)}',
       child: ExcludeSemantics(
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 70),
@@ -466,3 +470,53 @@ IconData categoryIcon(String category) => switch (category) {
       'gift' => Icons.card_giftcard,
       _ => Icons.more_horiz,
     };
+
+/// Each bank and wallet gets its own colour, so they are told apart at a
+/// glance. Monograms only: no bank logos.
+Color institutionColor(String institution) => switch (institution) {
+      'Telebirr' => const Color(0xFF006699),
+      'CBE' => const Color(0xFF7A1C7D),
+      'CBE Birr' => const Color(0xFF9333EA),
+      'Awash' || 'Awash Birr' => const Color(0xFF0D9488),
+      'BOA' => const Color(0xFFD97706),
+      'Dashen' || 'Amole' => const Color(0xFF1E40AF),
+      'M-PESA' => const Color(0xFF059669),
+      'Coopay' || 'Coop Bank' => const Color(0xFFEA580C),
+      'Berhan' => const Color(0xFFCA8A04),
+      'Bunna' => const Color(0xFF78350F),
+      'Hibret' => const Color(0xFF15803D),
+      'Ahadu' => const Color(0xFF0284C7),
+      _ => BirrColors.forest,
+    };
+
+/// A tinted circle with the institution's first letters.
+class InstitutionBadge extends StatelessWidget {
+  const InstitutionBadge(this.institution, {this.radius = 20, super.key});
+
+  final String institution;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = institutionColor(institution);
+    final letters = institution.replaceAll(RegExp('[^A-Za-z]'), '');
+    final monogram = (letters.length <= 3 && letters == letters.toUpperCase()
+            ? letters
+            : institution.substring(0, 1))
+        .toUpperCase();
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: color.withValues(alpha: .14),
+      child: Text(
+        monogram,
+        style: TextStyle(
+          // Darkened so the letters stay readable on the light tint.
+          color: Color.lerp(color, Colors.black, .3),
+          fontWeight: FontWeight.w700,
+          fontSize:
+              radius * switch (monogram.length) { 1 => .8, 2 => .62, _ => .5 },
+        ),
+      ),
+    );
+  }
+}

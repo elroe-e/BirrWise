@@ -66,15 +66,7 @@ class _AccountTile extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: theme.colorScheme.primaryContainer,
-            child: Text(
-              account.institution.substring(0, 1).toUpperCase(),
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(color: theme.colorScheme.primary),
-            ),
-          ),
+          InstitutionBadge(account.institution),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

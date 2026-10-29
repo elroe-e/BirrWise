@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_state.dart';
+import 'device.dart';
 import 'dialogs.dart';
 import 'home_screen.dart';
 import 'insights_screen.dart';
+import 'lock_screen.dart';
 import 'other_screens.dart';
 import 'plan_screen.dart';
 import 'sms_automation.dart';
@@ -34,6 +36,7 @@ class _BirrWiseAppState extends State<BirrWiseApp> with WidgetsBindingObserver {
   final AppState state = AppState();
   final SmsAutomationService smsAutomation = SmsAutomationService();
   late Future<void> loading;
+  bool locked = false;
 
   @override
   void initState() {
@@ -44,16 +47,25 @@ class _BirrWiseAppState extends State<BirrWiseApp> with WidgetsBindingObserver {
 
   Future<void> _load() async {
     await state.load();
-    if (!state.smsAutomationPrompted) {
-      await state.markSmsAutomationPrompted();
-      if (Platform.isAndroid && !state.bankSmsAutomationEnabled) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          final context = navigatorKey.currentContext;
-          if (context != null) {
-            unawaited(smsAutomation.requestEnable(context, state));
-          }
-        });
-      }
+    locked = state.hasPin;
+    final firstRun = !state.smsAutomationPrompted;
+    if (firstRun) await state.markSmsAutomationPrompted();
+    // Existing installs are asked about their banks once too.
+    if (firstRun || !state.banksChosen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final context = navigatorKey.currentContext;
+        if (context == null) return;
+        if (firstRun) await showWelcome(context, state);
+        if (!state.banksChosen && context.mounted) {
+          await showBankPicker(context, state);
+        }
+        if (firstRun &&
+            Platform.isAndroid &&
+            !state.bankSmsAutomationEnabled &&
+            context.mounted) {
+          unawaited(smsAutomation.requestEnable(context, state));
+        }
+      });
     }
     if (state.bankSmsAutomationEnabled) {
       await smsAutomation.synchronize(state);
@@ -62,6 +74,11 @@ class _BirrWiseAppState extends State<BirrWiseApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    if (lifecycleState == AppLifecycleState.paused &&
+        state.hasPin &&
+        !filePickerOpen) {
+      setState(() => locked = true);
+    }
     if (lifecycleState == AppLifecycleState.resumed &&
         state.ready &&
         state.bankSmsAutomationEnabled) {
@@ -93,6 +110,20 @@ class _BirrWiseAppState extends State<BirrWiseApp> with WidgetsBindingObserver {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          // Over every route, so a pushed screen cannot be seen while locked.
+          builder: (context, child) => Stack(
+            children: [
+              child!,
+              if (locked && state.ready && state.hasPin)
+                // Screen readers must not read the ledger behind the lock.
+                BlockSemantics(
+                  child: PinLockScreen(
+                    state: state,
+                    onUnlock: () => setState(() => locked = false),
+                  ),
+                ),
+            ],
+          ),
           home: state.ready
               ? BirrWiseShell(state: state)
               : _LoadingScreen(

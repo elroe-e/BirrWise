@@ -27,6 +27,23 @@ class AppState extends ChangeNotifier {
   List<PendingSms> messages = [];
   List<SavingsGoal> goals = [];
   List<Bill> bills = [];
+  List<Loan> loans = [];
+
+  /// Monthly spending limit per category, in santim.
+  Map<String, int> budgets = {};
+  int incomeTarget = 0;
+  int plannedSpending = 0;
+
+  /// Banks and wallets whose alerts are ignored; all others are tracked.
+  Set<String> ignoredInstitutions = {};
+
+  /// Whether the person has said which banks and wallets are theirs. Until
+  /// then alerts wait in the inbox, so none land in someone else's bank.
+  bool banksChosen = false;
+  bool merchantMode = false;
+
+  /// "salt:hash" of the app-lock PIN, or null when there is no lock.
+  String? pinHash;
   String language = 'en';
   bool soundEnabled = true;
   bool hapticsEnabled = true;
@@ -37,8 +54,8 @@ class AppState extends ChangeNotifier {
   bool smsHistoryScanned = false;
   bool smsAutomationPrompted = false;
 
-  /// Alerts received before automation was turned on go to review instead of
-  /// being added automatically, so they cannot double-count existing entries.
+  /// Alerts received before this are flagged when confirmed by hand, since
+  /// they may already be part of a balance the person entered.
   DateTime? smsAutomationEnabledAt;
   String? smsAutomationStatus;
   String? smsAutomationError;
@@ -72,6 +89,15 @@ class AppState extends ChangeNotifier {
       Bill.fromJson,
       field: 'bills',
     );
+    loans = _readList(prefs.getString('loans'), Loan.fromJson, field: 'loans');
+    budgets = _decodeBudgets(_decodeJson(prefs.getString('budgets'), 'budgets'));
+    incomeTarget = prefs.getInt('incomeTarget') ?? 0;
+    plannedSpending = prefs.getInt('plannedSpending') ?? 0;
+    ignoredInstitutions =
+        (prefs.getStringList('ignoredInstitutions') ?? const []).toSet();
+    banksChosen = prefs.getBool('banksChosen') ?? false;
+    merchantMode = prefs.getBool('merchantMode') ?? false;
+    pinHash = prefs.getString('pinHash');
     language = prefs.getString('language') ?? 'en';
     soundEnabled = prefs.getBool('soundEnabled') ?? true;
     hapticsEnabled = prefs.getBool('hapticsEnabled') ?? true;
@@ -86,7 +112,10 @@ class AppState extends ChangeNotifier {
     smsAutomationEnabledAt = enabledAt == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(enabledAt);
-    if (_migrate()) await _save();
+    final migrated = _migrate();
+    // Adds alerts that were left waiting for an account by older versions.
+    final imported = _autoImportPendingSms() > 0;
+    if (migrated || imported) await _save();
     ready = true;
     notifyListeners();
   }
@@ -96,7 +125,7 @@ class AppState extends ChangeNotifier {
     var changed = false;
     final now = _now();
     // Older versions did not record when an account was added. Treat it as
-    // now, so only alerts from here on are auto-imported into it.
+    // now, so alerts from before it are flagged when confirmed by hand.
     if (accounts.any((account) => account.createdAt == null)) {
       accounts = [
         for (final account in accounts)
@@ -106,6 +135,16 @@ class AppState extends ChangeNotifier {
     }
     if (bankSmsAutomationEnabled && smsAutomationEnabledAt == null) {
       smsAutomationEnabledAt = now;
+      changed = true;
+    }
+    // Older versions filed CBE Birr wallet alerts under the CBE bank. Without
+    // this they would be matched to the bank account and its balance.
+    String institutionOf(PendingSms message) =>
+        SmsParser.institutionFor(message.sender) ?? message.institution;
+    if (messages.any((m) => institutionOf(m) != m.institution)) {
+      messages = [
+        for (final m in messages) m.copyWith(institution: institutionOf(m))
+      ];
       changed = true;
     }
     // Older versions could give both legs of a transfer the same ID, which
@@ -123,10 +162,22 @@ class AppState extends ChangeNotifier {
   }
 
   List<T> _readList<T>(String? json, T Function(Map<String, dynamic>) decode,
-      {required String field}) {
-    if (json == null) return [];
+          {required String field}) =>
+      _decodeList(_decodeJson(json, field), decode, field: field);
+
+  Object? _decodeJson(String? json, String field) {
+    if (json == null) return null;
     try {
-      final value = jsonDecode(json);
+      return jsonDecode(json);
+    } on FormatException catch (error) {
+      throw FormatException('Could not read saved $field.', error);
+    }
+  }
+
+  List<T> _decodeList<T>(Object? value, T Function(Map<String, dynamic>) decode,
+      {required String field}) {
+    if (value == null) return [];
+    try {
       if (value is! List<dynamic>) {
         throw const FormatException('Expected a list.');
       }
@@ -140,7 +191,18 @@ class AppState extends ChangeNotifier {
       throw FormatException('Could not read saved $field.', error);
     } on TypeError catch (error) {
       throw FormatException('Could not read saved $field.', error);
+    } on ArgumentError catch (error) {
+      // An unknown enum name, such as a type from a newer version.
+      throw FormatException('Could not read saved $field.', error);
     }
+  }
+
+  Map<String, int> _decodeBudgets(Object? value) {
+    if (value == null) return {};
+    if (value is! Map<String, dynamic> || value.values.any((v) => v is! int)) {
+      throw const FormatException('Could not read saved budgets.');
+    }
+    return value.cast<String, int>();
   }
 
   Future<void> _save() async {
@@ -151,6 +213,17 @@ class AppState extends ChangeNotifier {
       prefs.setString('messages', encodeList(messages, (m) => m.toJson())),
       prefs.setString('goals', encodeList(goals, (g) => g.toJson())),
       prefs.setString('bills', encodeList(bills, (b) => b.toJson())),
+      prefs.setString('loans', encodeList(loans, (l) => l.toJson())),
+      prefs.setString('budgets', jsonEncode(budgets)),
+      prefs.setInt('incomeTarget', incomeTarget),
+      prefs.setInt('plannedSpending', plannedSpending),
+      prefs.setStringList('ignoredInstitutions', ignoredInstitutions.toList()),
+      prefs.setBool('banksChosen', banksChosen),
+      prefs.setBool('merchantMode', merchantMode),
+      if (pinHash case final hash?)
+        prefs.setString('pinHash', hash)
+      else
+        prefs.remove('pinHash'),
       prefs.setString('language', language),
       prefs.setBool('soundEnabled', soundEnabled),
       prefs.setBool('hapticsEnabled', hapticsEnabled),
@@ -172,12 +245,14 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  int balanceFor(String accountId) {
+  /// The account's balance now, or as of [at] if given.
+  int balanceFor(String accountId, {DateTime? at}) {
     var total = accounts
         .where((account) => account.id == accountId)
         .fold<int>(0, (sum, account) => sum + account.openingBalance);
-    for (final entry
-        in entries.where((entry) => entry.accountId == accountId)) {
+    for (final entry in entries.where((entry) =>
+        entry.accountId == accountId &&
+        (at == null || !entry.date.isAfter(at)))) {
       switch (entry.type) {
         case EntryType.income:
         case EntryType.transferIn:
@@ -373,7 +448,15 @@ class AppState extends ChangeNotifier {
     if (!accounts.any((account) => account.id == accountId)) {
       throw ArgumentError.value(accountId, 'accountId');
     }
-    final difference = balance - balanceFor(accountId);
+    final difference = _reconcile(accountId, balance);
+    if (difference != 0) await _changed();
+    return difference;
+  }
+
+  /// Adds an adjustment dated [at] (default now) so the balance as of then
+  /// is [balance]. Returns the signed difference.
+  int _reconcile(String accountId, int balance, {DateTime? at}) {
+    final difference = balance - balanceFor(accountId, at: at);
     if (difference == 0) return 0;
     entries = [
       ...entries,
@@ -385,10 +468,9 @@ class AppState extends ChangeNotifier {
         category: 'other',
         party: '',
         note: '',
-        date: _now(),
+        date: at ?? _now(),
       ),
     ];
-    await _changed();
     return difference;
   }
 
@@ -424,6 +506,7 @@ class AppState extends ChangeNotifier {
     String? institution,
     String? smsReference,
     String? goalId,
+    bool business = false,
   }) async {
     if (amount <= 0) throw ArgumentError.value(amount, 'amount');
     if (!accounts.any((account) => account.id == accountId)) {
@@ -452,6 +535,7 @@ class AppState extends ChangeNotifier {
         institution: institution,
         smsReference: smsReference,
         goalId: goalId,
+        business: business,
       ),
     ];
     await _changed();
@@ -542,10 +626,11 @@ class AppState extends ChangeNotifier {
     var ignored = 0;
     var duplicates = 0;
     var changed = false;
+    final added = <(String, PendingSms)>[];
 
     for (final sms in incoming) {
       final parsed = SmsParser.parse(sms.sender, sms.body);
-      if (parsed == null) {
+      if (parsed == null || ignoredInstitutions.contains(parsed.institution)) {
         ignored++;
         continue;
       }
@@ -578,13 +663,13 @@ class AppState extends ChangeNotifier {
 
       messages = [...messages, candidate];
       changed = true;
-      final account = _accountForSms(candidate);
-      if (autoImport &&
-          bankSmsAutomationEnabled &&
-          account != null &&
-          _canAutoImport(candidate, account)) {
+      final account = autoImport && bankSmsAutomationEnabled && banksChosen
+          ? _accountForAutoImport(candidate)
+          : null;
+      if (account != null) {
         if (_confirmSms(candidate.id, accountId: account.id, clearBody: true)) {
           imported++;
+          added.add((account.id, candidate));
         } else {
           duplicates++;
         }
@@ -592,6 +677,7 @@ class AppState extends ChangeNotifier {
         pending++;
       }
     }
+    _matchBankBalances(added);
 
     if (changed) await _changed();
     return SmsIngestSummary(
@@ -634,19 +720,55 @@ class AppState extends ChangeNotifier {
     });
   }
 
-  /// Clear alerts are added without review only if they arrived after the
-  /// account was added and after tracking was turned on. Anything older is
-  /// probably already part of the opening balance or entered by hand.
-  bool _canAutoImport(PendingSms message, Account account) {
-    if (message.confidence == SmsConfidence.low ||
-        message.direction == SmsDirection.unknown) {
-      return false;
+  /// The account a fetched alert is added to without review: the one active
+  /// account for its bank. A bank with no account yet gets one. Null means
+  /// the alert waits in review (unclear direction, or several accounts).
+  Account? _accountForAutoImport(PendingSms message) {
+    final bank = message.institution.toLowerCase();
+    if (!accounts.any((account) => account.institution.toLowerCase() == bank)) {
+      accounts = [
+        ...accounts,
+        Account(
+          id: _id(),
+          name: message.institution,
+          institution: message.institution,
+          openingBalance: 0,
+          createdAt: _now(),
+        ),
+      ];
     }
-    final createdAt = account.createdAt;
-    final enabledAt = smsAutomationEnabledAt;
-    if (createdAt == null || enabledAt == null) return false;
-    return !message.receivedAt.isBefore(createdAt) &&
-        !message.receivedAt.isBefore(enabledAt);
+    return message.direction == SmsDirection.unknown
+        ? null
+        : _accountForSms(message);
+  }
+
+  /// Makes each account agree with the balance its bank reported in the
+  /// newest of the [added] alerts, so alerts that are already part of an
+  /// opening balance are not counted twice. The difference is recorded as an
+  /// adjustment at that alert's time.
+  void _matchBankBalances(List<(String, PendingSms)> added) {
+    final newest = <String, PendingSms>{};
+    for (final (accountId, message) in added) {
+      final current = newest[accountId];
+      if (message.balanceAfter != null &&
+          (current == null || message.receivedAt.isAfter(current.receivedAt))) {
+        newest[accountId] = message;
+      }
+    }
+    newest.forEach((accountId, message) {
+      final at = message.receivedAt;
+      // shortcut: an alert older than a later adjustment is left alone, so an
+      // old alert found by a rescan can leave the balance off by its amount
+      // until the next alert or a Correct balance; re-anchor on the newest
+      // reported balance overall if that shows up in practice.
+      if (entries.any((entry) =>
+          entry.accountId == accountId &&
+          entry.type == EntryType.adjustment &&
+          entry.date.isAfter(at))) {
+        return;
+      }
+      _reconcile(accountId, message.balanceAfter!, at: at);
+    });
   }
 
   Account? _accountForSms(PendingSms message) {
@@ -660,19 +782,20 @@ class AppState extends ChangeNotifier {
   }
 
   int _autoImportPendingSms() {
-    if (!bankSmsAutomationEnabled) return 0;
-    var imported = 0;
+    if (!bankSmsAutomationEnabled || !banksChosen) return 0;
+    final added = <(String, PendingSms)>[];
     for (final message in messages.toList()) {
       if (!message.automaticallyFetched || message.status != 'pending') {
         continue;
       }
-      final account = _accountForSms(message);
+      final account = _accountForAutoImport(message);
       if (account != null &&
-          _canAutoImport(message, account) &&
           _confirmSms(message.id, accountId: account.id, clearBody: true)) {
-        imported++;
+        added.add((account.id, message));
       }
     }
+    _matchBankBalances(added);
+    final imported = added.length;
     final previous = lastSmsIngestSummary;
     if (imported > 0 && previous != null) {
       lastSmsIngestSummary = SmsIngestSummary(
@@ -951,8 +1074,218 @@ class AppState extends ChangeNotifier {
       case 'ethiopian':
         useEthiopianCalendar = value;
         break;
+      case 'merchant':
+        merchantMode = value;
+        break;
     }
     await _changed();
+  }
+
+  /// Sets a category's monthly limit; 0 removes the budget.
+  Future<void> setBudget(String category, int limit) async {
+    if (limit < 0) throw ArgumentError.value(limit, 'limit');
+    budgets = {...budgets, category: limit}..removeWhere((_, v) => v == 0);
+    await _changed();
+  }
+
+  Future<void> setMonthlyTargets({
+    required int income,
+    required int spending,
+  }) async {
+    if (income < 0 || spending < 0) throw ArgumentError('Targets must be >= 0');
+    incomeTarget = income;
+    plannedSpending = spending;
+    await _changed();
+  }
+
+  Future<void> addLoan({
+    required String person,
+    required bool lent,
+    required int amount,
+  }) async {
+    if (person.trim().isEmpty || amount <= 0) {
+      throw ArgumentError('Enter a name and an amount.');
+    }
+    loans = [
+      ...loans,
+      Loan(
+        id: _id(),
+        person: person.trim(),
+        lent: lent,
+        amount: amount,
+        paid: 0,
+        createdAt: _now(),
+      ),
+    ];
+    await _changed();
+  }
+
+  /// Records a repayment, never beyond what is still owed.
+  Future<void> recordLoanPayment(String id, int amount) async {
+    if (amount <= 0) throw ArgumentError.value(amount, 'amount');
+    loans = [
+      for (final loan in loans)
+        loan.id == id
+            ? loan.withPaid((loan.paid + amount).clamp(0, loan.amount))
+            : loan
+    ];
+    await _changed();
+  }
+
+  Future<void> removeLoan(String id) async {
+    loans = loans.where((loan) => loan.id != id).toList();
+    await _changed();
+  }
+
+  /// How many saved alerts came from each bank or wallet.
+  Map<String, int> get alertCounts {
+    final counts = <String, int>{};
+    for (final message in messages) {
+      counts.update(message.institution, (n) => n + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
+  /// Records which banks and wallets are the person's, removes what was
+  /// added from the others, and adds the waiting alerts from theirs.
+  Future<void> chooseBanks(Set<String> mine) async {
+    final before = banksChosen ? ignoredInstitutions : <String>{};
+    ignoredInstitutions =
+        SmsParser.institutions.where((i) => !mine.contains(i)).toSet();
+    banksChosen = true;
+    ignoredInstitutions.difference(before).forEach(_removeBank);
+    final back = before.difference(ignoredInstitutions);
+    accounts = [
+      for (final a in accounts)
+        back.contains(a.institution) ? a.copyWith(archived: false) : a
+    ];
+    _autoImportPendingSms();
+    await _changed();
+  }
+
+  /// Takes a bank that is not the person's out of the ledger. Accounts that
+  /// BirrWise created and filled only from its alerts are deleted with those
+  /// entries; any other account for it is archived. Its alerts move to
+  /// Dismissed, where they can still be restored.
+  void _removeBank(String institution) {
+    bool automatic(Account a) =>
+        a.name == institution &&
+        a.openingBalance == 0 &&
+        entries.every((e) =>
+            e.accountId != a.id ||
+            e.source == EntrySource.sms ||
+            e.type == EntryType.adjustment);
+    final dropped = {
+      for (final a in accounts)
+        if (a.institution == institution && automatic(a)) a.id
+    };
+    entries = entries.where((e) => !dropped.contains(e.accountId)).toList();
+    accounts = [
+      for (final a in accounts)
+        if (!dropped.contains(a.id))
+          a.institution == institution ? a.copyWith(archived: true) : a
+    ];
+    messages = [
+      for (final m in messages)
+        m.institution == institution && m.status != 'dismissed'
+            ? m.copyWith(status: 'dismissed')
+            : m
+    ];
+  }
+
+  bool get hasPin => pinHash != null;
+
+  // shortcut: a 4-digit PIN has only 10,000 values, so the hash just keeps it
+  // out of plain text; the app sandbox is the real protection. Use a slow
+  // KDF if the PIN ever guards data that leaves the device.
+  Future<void> setPin(String pin) async {
+    if (!RegExp(r'^[0-9]{4}$').hasMatch(pin)) {
+      throw ArgumentError('The PIN must be 4 digits.');
+    }
+    final salt = _hash(_id());
+    pinHash = '$salt:${_hash('$salt:$pin')}';
+    await _changed();
+  }
+
+  bool checkPin(String pin) {
+    final parts = pinHash?.split(':');
+    if (parts == null || parts.length != 2) return true;
+    return _hash('${parts[0]}:$pin') == parts[1];
+  }
+
+  Future<void> clearPin() async {
+    pinHash = null;
+    await _changed();
+  }
+
+  /// Everything in the ledger and plan, without device settings or the PIN.
+  String exportBackup() => jsonEncode({
+        'app': 'BirrWise',
+        'version': 1,
+        'exportedAt': _now().toIso8601String(),
+        'accounts': [for (final a in accounts) a.toJson()],
+        'entries': [for (final e in entries) e.toJson()],
+        'messages': [for (final m in messages) m.toJson()],
+        'goals': [for (final g in goals) g.toJson()],
+        'bills': [for (final b in bills) b.toJson()],
+        'loans': [for (final l in loans) l.toJson()],
+        'budgets': budgets,
+        'incomeTarget': incomeTarget,
+        'plannedSpending': plannedSpending,
+      });
+
+  /// Replaces the ledger and plan with a backup. Nothing changes unless the
+  /// whole file reads correctly.
+  Future<bool> restoreBackup(String json) async {
+    try {
+      final data = jsonDecode(json);
+      if (data is! Map<String, dynamic> || data['app'] != 'BirrWise') {
+        return false;
+      }
+      final restoredAccounts =
+          _decodeList(data['accounts'], Account.fromJson, field: 'accounts');
+      final restoredEntries = _decodeList(
+          data['entries'], FinanceEntry.fromJson,
+          field: 'transactions');
+      final restoredMessages =
+          _decodeList(data['messages'], PendingSms.fromJson, field: 'SMS');
+      final restoredGoals =
+          _decodeList(data['goals'], SavingsGoal.fromJson, field: 'goals');
+      final restoredBills =
+          _decodeList(data['bills'], Bill.fromJson, field: 'bills');
+      final restoredLoans =
+          _decodeList(data['loans'], Loan.fromJson, field: 'loans');
+      final restoredBudgets = _decodeBudgets(data['budgets']);
+      final income = data['incomeTarget'] ?? 0;
+      final spending = data['plannedSpending'] ?? 0;
+      if (income is! int || spending is! int) return false;
+
+      accounts = restoredAccounts;
+      entries = restoredEntries;
+      messages = restoredMessages;
+      goals = restoredGoals;
+      bills = restoredBills;
+      loans = restoredLoans;
+      budgets = restoredBudgets;
+      incomeTarget = income;
+      plannedSpending = spending;
+    } on FormatException {
+      return false;
+    }
+    _migrate();
+    await _changed();
+    return true;
+  }
+
+  /// Erases everything stored by BirrWise. Turn SMS tracking off on the
+  /// Android side first, or queued alerts come back in.
+  Future<void> clearAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    smsAutomationStatus = null;
+    smsAutomationError = null;
+    lastSmsIngestSummary = null;
+    await load();
   }
 
   Future<void> _changed() async {

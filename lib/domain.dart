@@ -111,6 +111,7 @@ class FinanceEntry {
     this.smsReference,
     this.goalId,
     this.transferGroupId,
+    this.business = false,
   });
 
   final String id;
@@ -127,6 +128,9 @@ class FinanceEntry {
   final String? goalId;
   final String? transferGroupId;
 
+  /// Tagged as shop or business money while merchant mode is on.
+  final bool business;
+
   FinanceEntry withId(String newId) => FinanceEntry(
         id: newId,
         accountId: accountId,
@@ -141,6 +145,7 @@ class FinanceEntry {
         smsReference: smsReference,
         goalId: goalId,
         transferGroupId: transferGroupId,
+        business: business,
       );
 
   Map<String, Object?> toJson() => {
@@ -157,6 +162,7 @@ class FinanceEntry {
         'smsReference': smsReference,
         'goalId': goalId,
         'transferGroupId': transferGroupId,
+        'business': business,
       };
 
   factory FinanceEntry.fromJson(Map<String, dynamic> json) => FinanceEntry(
@@ -174,6 +180,60 @@ class FinanceEntry {
         smsReference: json['smsReference'] as String?,
         goalId: json['goalId'] as String?,
         transferGroupId: json['transferGroupId'] as String?,
+        business: json['business'] as bool? ?? false,
+      );
+}
+
+/// Money lent to or borrowed from a person. Kept off the ledger: the
+/// repayment usually arrives as a bank alert too and would count twice.
+class Loan {
+  const Loan({
+    required this.id,
+    required this.person,
+    required this.lent,
+    required this.amount,
+    required this.paid,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String person;
+
+  /// True if the person owes you; false if you owe them.
+  final bool lent;
+  final int amount;
+  final int paid;
+  final DateTime createdAt;
+
+  int get remaining => amount - paid;
+  bool get settled => paid >= amount;
+
+  Loan withPaid(int value) => Loan(
+        id: id,
+        person: person,
+        lent: lent,
+        amount: amount,
+        paid: value,
+        createdAt: createdAt,
+      );
+
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'person': person,
+        'lent': lent,
+        'amount': amount,
+        'paid': paid,
+        'createdAt': createdAt.millisecondsSinceEpoch,
+      };
+
+  factory Loan.fromJson(Map<String, dynamic> json) => Loan(
+        id: json['id'] as String,
+        person: json['person'] as String,
+        lent: json['lent'] as bool,
+        amount: json['amount'] as int,
+        paid: json['paid'] as int? ?? 0,
+        createdAt:
+            DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
       );
 }
 
@@ -218,6 +278,8 @@ class PendingSms {
   final String category;
 
   PendingSms copyWith({
+    String? institution,
+    int? amount,
     SmsDirection? direction,
     String? party,
     String? category,
@@ -228,9 +290,9 @@ class PendingSms {
       PendingSms(
         id: id,
         sender: sender,
-        institution: institution,
+        institution: institution ?? this.institution,
         body: body ?? this.body,
-        amount: amount,
+        amount: amount ?? this.amount,
         direction: direction ?? this.direction,
         party: party ?? this.party,
         reference: reference,

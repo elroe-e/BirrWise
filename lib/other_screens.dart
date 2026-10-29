@@ -4,9 +4,12 @@ import 'package:flutter/services.dart';
 
 import 'accounts_screen.dart';
 import 'app_state.dart';
+import 'device.dart';
 import 'dialogs.dart';
 import 'domain.dart';
+import 'lock_screen.dart';
 import 'sms_automation.dart';
+import 'sms_parser.dart';
 import 'sms_inbox_screen.dart';
 import 'strings.dart';
 import 'theme.dart';
@@ -47,14 +50,14 @@ class HubScreen extends StatelessWidget {
       _HubItem(
         Icons.file_download_outlined,
         lang == 'am' ? 'ውጭ ላክ' : 'Export CSV',
-        lang == 'am' ? 'የግብይት ዝርዝር ቅዳ' : 'Copy a ledger export',
-        onTap: () => _copyCsv(context),
+        t(lang, 'csvSub'),
+        onTap: () => _saveCsv(context),
       ),
       _HubItem(
         Icons.backup_outlined,
-        lang == 'am' ? 'የውሂብ መረጃ' : 'Local data',
-        lang == 'am' ? 'ስለ ማስቀመጫ ይወቁ' : 'Storage and backup details',
-        onTap: () => _backupInfo(context),
+        t(lang, 'backup'),
+        t(lang, 'backupSub'),
+        onTap: () => _backup(context),
       ),
       _HubItem(
         Icons.help_outline,
@@ -128,6 +131,18 @@ class HubScreen extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         BirrCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: SwitchListTile(
+            secondary: const Icon(Icons.storefront_outlined),
+            title: Text(t(lang, 'merchantMode')),
+            subtitle: Text(t(lang, 'merchantModeSub')),
+            value: state.merchantMode,
+            onChanged: (value) => state.setPreference('merchant', value),
+          ),
+        ),
+        const SizedBox(height: 12),
+        BirrCard(
+          onTap: () => showPrivacyPolicy(context, lang),
           child: Row(
             children: [
               const Icon(Icons.lock_outline, color: BirrColors.forest),
@@ -150,9 +165,9 @@ class HubScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _copyCsv(BuildContext context) async {
+  Future<void> _saveCsv(BuildContext context) async {
     final csv =
-        StringBuffer('date,account,type,category,description,amount_etb\n');
+        StringBuffer('date,account,type,category,description,amount_etb,business\n');
     String quoted(String value) => '"${value.replaceAll('"', '""')}"';
     for (final entry in state.recentEntries) {
       final account = state.accounts
@@ -170,36 +185,119 @@ class HubScreen extends StatelessWidget {
           '${(signed.abs() % 100).toString().padLeft(2, '0')}';
       csv.writeln(
         '${entry.date.toIso8601String()},${quoted(account)},${entry.type.name},'
-        '${entry.category},${quoted(entry.party)},$amount',
+        '${entry.category},${quoted(entry.party)},$amount,${entry.business}',
       );
     }
-    await Clipboard.setData(ClipboardData(text: csv.toString()));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(state.language == 'am'
-              ? 'ዝርዝሩ ወደ ቅንጥብ ሰሌዳ ተቀድቷል'
-              : 'CSV copied. Clipboard contents may be visible to other apps.'),
+    await _saveFile(
+      context,
+      name: 'BirrWise_Transactions_${_today()}.csv',
+      mimeType: 'text/csv',
+      content: csv.toString(),
+    );
+  }
+
+  Future<void> _backup(BuildContext context) async {
+    final lang = state.language;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.save_alt_outlined),
+              title: Text(t(lang, 'saveBackup')),
+              onTap: () => Navigator.pop(context, 'save'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.restore_outlined),
+              title: Text(t(lang, 'restoreBackup')),
+              onTap: () => Navigator.pop(context, 'restore'),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Text(t(lang, 'backupWarning'),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ),
+          ],
         ),
+      ),
+    );
+    if (!context.mounted) return;
+    if (choice == 'save') {
+      await _saveFile(
+        context,
+        name: 'BirrWise_Backup_${_today()}.json',
+        mimeType: 'application/json',
+        content: state.exportBackup(),
       );
+    } else if (choice == 'restore') {
+      await _restore(context);
     }
   }
 
-  void _backupInfo(BuildContext context) {
-    showDialog<void>(
+  Future<void> _restore(BuildContext context) async {
+    final lang = state.language;
+    final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(state.language == 'am' ? 'ምትኬ' : 'Private by default'),
-        content: Text(state.language == 'am'
-            ? 'ውሂብዎ በዚህ ስልክ ላይ ይቀመጣል። የማስቀመጫ ፋይል ሲያወጡ ያለ ምስጠራ ሊሆን ይችላል።'
-            : 'Your data stays in this app on this phone. An exported backup file would not be encrypted.'),
+        title: Text(t(lang, 'restoreBackup')),
+        content: Text(t(lang, 'restoreConfirm')),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('OK')),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(t(lang, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(t(lang, 'restoreBackup')),
+          ),
         ],
       ),
     );
+    if (sure != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    String message;
+    try {
+      final content = await openDocument();
+      if (content == null) return;
+      message = t(lang,
+          await state.restoreBackup(content) ? 'restoreDone' : 'restoreInvalid');
+    } on PlatformException {
+      message = t(lang, 'fileFailed');
+    } on MissingPluginException {
+      message = t(lang, 'fileFailed');
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
+
+  Future<void> _saveFile(
+    BuildContext context, {
+    required String name,
+    required String mimeType,
+    required String content,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    String message;
+    try {
+      if (!await saveDocument(
+          name: name, mimeType: mimeType, content: content)) {
+        return;
+      }
+      message = t(state.language, 'fileSaved');
+    } on PlatformException {
+      message = t(state.language, 'fileFailed');
+    } on MissingPluginException {
+      message = t(state.language, 'fileFailed');
+    }
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _today() => DateTime.now().toIso8601String().substring(0, 10);
 
   void _helpInfo(BuildContext context) {
     showDialog<void>(
@@ -208,7 +306,7 @@ class HubScreen extends StatelessWidget {
         title: Text(state.language == 'am' ? 'የኤስኤምኤስ ግላዊነት' : 'SMS privacy'),
         content: Text(state.language == 'am'
             ? 'የባንክ መልዕክቶችዎን ሳያከማቹ የሚመርጡትን ብቻ ወደ የግብይት መዝገብ ያክሉ።'
-            : 'Automatic bank-SMS tracking is optional. When enabled, only supported bank senders are checked on this device. Clear alerts are added automatically only to one matching account, and only if they arrived after that account was added and tracking was turned on; older or uncertain alerts wait in review. New alerts sync when you reopen BirrWise. Nothing is sent to a server.'),
+            : 'Automatic bank-SMS tracking is optional. When enabled, only supported bank senders are checked on this device. Each clear alert is added automatically to the account for its bank, which BirrWise creates if needed, and the account follows the balance the bank reports. Unclear alerts, or alerts for a bank with several accounts, wait in review. New alerts sync when you reopen BirrWise. Nothing is sent to a server.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context), child: const Text('OK')),
@@ -307,20 +405,19 @@ class SettingsScreen extends StatelessWidget {
                 spacing: 10,
                 runSpacing: 8,
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: state.soundEnabled
-                        ? () => SystemSound.play(SystemSoundType.click)
-                        : null,
-                    icon: const Icon(Icons.music_note_outlined),
-                    label: Text(t(lang, 'testChime')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: state.soundEnabled
-                        ? () => SystemSound.play(SystemSoundType.alert)
-                        : null,
-                    icon: const Icon(Icons.notifications_outlined),
-                    label: Text(t(lang, 'testSms')),
-                  ),
+                  for (final (sound, icon, label) in [
+                    ('chime', Icons.music_note_outlined, 'testChime'),
+                    ('sms', Icons.notifications_outlined, 'testSms'),
+                    ('cash', Icons.payments_outlined, 'testCash'),
+                    ('goal', Icons.celebration_outlined, 'testGoal'),
+                  ])
+                    OutlinedButton.icon(
+                      onPressed: state.soundEnabled
+                          ? () => playSound(state, sound)
+                          : null,
+                      icon: Icon(icon),
+                      label: Text(t(lang, label)),
+                    ),
                 ],
               ),
             ),
@@ -383,6 +480,16 @@ class SettingsScreen extends StatelessWidget {
                           ),
                     ),
                   ],
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.account_balance_outlined),
+                    title: Text(t(lang, 'monitoredBanks')),
+                    subtitle: Text(t(lang, 'monitoredBanksCount').replaceAll(
+                        '{count}',
+                        '${SmsParser.institutions.where((i) => !state.ignoredInstitutions.contains(i)).length}')),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => showBankPicker(context, state),
+                  ),
                   if (state.bankSmsAutomationEnabled) ...[
                     const SizedBox(height: 6),
                     Align(
@@ -416,24 +523,50 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _SettingsGroup(
-          title: lang == 'am' ? 'ውሂብ' : 'Data',
+          title: t(lang, 'security'),
           child: ListTile(
             minTileHeight: 64,
-            leading: const Icon(Icons.lock_outline),
-            title: Text(t(lang, 'privacy')),
-            subtitle: Text(t(lang, 'privacySub')),
+            leading: const Icon(Icons.pin_outlined),
+            title: Text(t(lang, 'pinLock')),
+            subtitle: Text(t(lang, state.hasPin ? 'pinOn' : 'pinOff')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => state.hasPin
+                ? _removePin(context, state)
+                : _setPin(context, state),
           ),
+        ),
+        const SizedBox(height: 14),
+        _SettingsGroup(
+          title: lang == 'am' ? 'ውሂብ' : 'Data',
+          children: [
+            ListTile(
+              minTileHeight: 64,
+              leading: const Icon(Icons.lock_outline),
+              title: Text(t(lang, 'privacyPolicy')),
+              subtitle: Text(t(lang, 'privacySub')),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => showPrivacyPolicy(context, lang),
+            ),
+            ListTile(
+              minTileHeight: 64,
+              leading: Icon(Icons.delete_forever_outlined,
+                  color: Theme.of(context).colorScheme.error),
+              title: Text(t(lang, 'eraseAll'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              onTap: () => _eraseAll(context, state),
+            ),
+          ],
         ),
         const SizedBox(height: 18),
         GestureDetector(
           onTap: () => showAboutDialog(
             context: context,
             applicationName: 'BirrWise',
-            applicationVersion: '1.1.1',
+            applicationVersion: '1.2.0',
             applicationLegalese: 'Private, offline-first finance tracking.',
           ),
           child: Text(
-            'BirrWise · 1.1.1',
+            'BirrWise · 1.2.0',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -500,6 +633,134 @@ Future<void> _setBankSmsAutomation(
     return;
   }
   await service.requestEnable(context, state);
+}
+
+Future<void> _setPin(BuildContext context, AppState state) async {
+  final lang = state.language;
+  final first = TextEditingController();
+  final again = TextEditingController();
+  Widget field(TextEditingController controller, String label,
+          {String? error}) =>
+      TextField(
+        controller: controller,
+        autofocus: controller == first,
+        obscureText: true,
+        maxLength: 4,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(labelText: label, errorText: error),
+      );
+  // Asked twice: a mistyped PIN can only be undone by erasing everything.
+  final pin = await showDialog<String>(
+    context: context,
+    builder: (context) => ListenableBuilder(
+      listenable: Listenable.merge([first, again]),
+      builder: (context, _) {
+        final complete = first.text.length == 4 && again.text.length == 4;
+        final matches = complete && first.text == again.text;
+        return AlertDialog(
+          title: Text(t(lang, 'pinLock')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              field(first, t(lang, 'pinEnter')),
+              field(again, t(lang, 'pinAgain'),
+                  error: complete && !matches ? t(lang, 'pinMismatch') : null),
+              Text(t(lang, 'pinForgetWarning'),
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(t(lang, 'cancel')),
+            ),
+            FilledButton(
+              onPressed:
+                  matches ? () => Navigator.pop(context, first.text) : null,
+              child: Text(t(lang, 'save')),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+  first.dispose();
+  again.dispose();
+  if (pin != null) await state.setPin(pin);
+}
+
+Future<void> _removePin(BuildContext context, AppState state) async {
+  final lang = state.language;
+  final off = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(t(lang, 'pinLock')),
+      content: Text(t(lang, 'pinRemoveConfirm')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(t(lang, 'cancel')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(t(lang, 'turnOff')),
+        ),
+      ],
+    ),
+  );
+  if (off == true) await state.clearPin();
+}
+
+Future<void> _eraseAll(BuildContext context, AppState state) async {
+  final lang = state.language;
+  final sure = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      icon: const Icon(Icons.warning_amber_rounded),
+      title: Text(t(lang, 'eraseAll')),
+      content: Text(t(lang, 'eraseConfirm')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(t(lang, 'cancel')),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error),
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(t(lang, 'eraseEverything')),
+        ),
+      ],
+    ),
+  );
+  if (sure != true || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  // Stop the Android receiver first, or its queued alerts come back in.
+  if (!await SmsAutomationService().disable(state)) {
+    messenger.showSnackBar(
+        SnackBar(content: Text(t(state.language, 'smsSyncFailed'))));
+    return;
+  }
+  await state.clearAllData();
+  messenger.showSnackBar(SnackBar(content: Text(t(state.language, 'erased'))));
+}
+
+/// What BirrWise does with SMS and money data, in plain words.
+void showPrivacyPolicy(BuildContext context, String lang) {
+  showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(t(lang, 'privacyPolicy')),
+      content: SingleChildScrollView(child: Text(t(lang, 'privacyPolicyBody'))),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(t(lang, 'understood')),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SettingsGroup extends StatelessWidget {

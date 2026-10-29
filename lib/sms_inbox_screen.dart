@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'dialogs.dart';
@@ -310,6 +311,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
   late SmsDirection direction = widget.message.direction;
   late String party = widget.message.party;
   late String category = widget.message.category;
+  late int amount = widget.message.amount;
   String? chosenAccountId;
   bool busy = false;
 
@@ -352,15 +354,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Text(
-                    message.institution.substring(0, 1),
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: theme.colorScheme.primary),
-                  ),
-                ),
+                InstitutionBadge(message.institution),
                 const SizedBox(width: 11),
                 Expanded(
                   child: Column(
@@ -384,14 +378,26 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
               ],
             ),
             const SizedBox(height: 17),
-            Text(
-              '${direction == SmsDirection.income ? '+' : direction == SmsDirection.expense ? '−' : ''}${formatEtb(message.amount, hidden: state.hideBalances)}',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontFamily: 'serif',
-                fontSize: 25,
-                color: color,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    '${direction == SmsDirection.income ? '+' : direction == SmsDirection.expense ? '−' : ''}${formatEtb(amount, hidden: state.hideBalances)}',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontFamily: 'serif',
+                      fontSize: 25,
+                      color: color,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                if (pending)
+                  IconButton(
+                    tooltip: t(lang, 'editAmount'),
+                    onPressed: () => _editAmount(context),
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                  ),
+              ],
             ),
             if (pending && message.direction == SmsDirection.unknown) ...[
               const SizedBox(height: 12),
@@ -430,7 +436,9 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
                 items: activeAccounts
                     .map((a) => DropdownMenuItem(
                           value: a.id,
-                          child: Text('${a.name} · ${a.institution}'),
+                          child: Text(a.name == a.institution
+                              ? a.name
+                              : '${a.name} · ${a.institution}'),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -550,6 +558,42 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
     );
   }
 
+  Future<void> _editAmount(BuildContext context) async {
+    final lang = widget.state.language;
+    final controller = TextEditingController(
+        text: formatEtb(amount, withCode: false).replaceAll(',', ''));
+    final value = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t(lang, 'editAmount')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          ],
+          decoration: const InputDecoration(prefixText: 'ETB  '),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t(lang, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = parseEtbToSantim(controller.text);
+              if (value != null && value > 0) Navigator.pop(context, value);
+            },
+            child: Text(t(lang, 'save')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (value != null && mounted) setState(() => amount = value);
+  }
+
   Future<void> _confirm(BuildContext context, String accountId) async {
     final state = widget.state;
     final lang = state.language;
@@ -559,6 +603,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => busy = true);
     await state.updateSms(message.copyWith(
+      amount: amount,
       direction: direction,
       party: party,
       category: category,

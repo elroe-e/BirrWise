@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:birrwise/app_state.dart';
 import 'package:birrwise/domain.dart';
+import 'package:birrwise/sms_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +16,7 @@ void main() {
     now = DateTime(2026, 10, 22, 9);
     state = AppState(clock: () => now);
     await state.load();
+    await state.chooseBanks(SmsParser.institutions.toSet());
   });
 
   test('derives account balances and keeps transfers out of income totals',
@@ -234,19 +236,43 @@ void main() {
     expect(state.messages.single.sourceFingerprint, isNotNull);
   });
 
-  test('alerts older than their account stay in review, newer ones import',
+  test('creates the bank account and matches the balance the bank reports',
       () async {
     await state.setBankSmsAutomationEnabled(true);
     final summary = await state.ingestBankSms([
       BankSms(
-        id: 'incoming:before-account',
-        sender: 'CBE',
-        body: 'You received ETB 42.00 from Hana.',
+        id: 'inbox:newer',
+        sender: '127',
+        body: 'You have paid ETB 30.00. Your transaction number is HX12AB34CD. '
+            'Your current balance is ETB 970.00.',
+        receivedAt: DateTime(2026, 10, 22, 11),
+      ),
+      BankSms(
+        id: 'inbox:older',
+        sender: '127',
+        body: 'You have received ETB 200.00. Your transaction number is '
+            'HX56CD78EF. Your current balance is ETB 1,000.00.',
         receivedAt: DateTime(2026, 10, 22, 10),
       ),
+      BankSms(
+        id: 'inbox:unclear',
+        sender: '127',
+        body: 'Transaction of ETB 5.00 processed. Ref: HX90GH12IJ',
+        receivedAt: DateTime(2026, 10, 22, 12),
+      ),
     ]);
-    expect(summary.pending, 1);
 
+    final account = state.accounts.single;
+    expect(account.name, 'Telebirr');
+    expect(summary.imported, 2);
+    expect(summary.pending, 1);
+    expect(state.balanceFor(account.id), 97000);
+    expect(state.monthIncome, 20000);
+    expect(state.monthExpenses, 3000);
+  });
+
+  test('older alerts are added without double-counting a typed balance',
+      () async {
     // The opening balance entered at 11:00 already includes the 10:00 alert.
     now = DateTime(2026, 10, 22, 11);
     await state.addAccount(
@@ -254,47 +280,57 @@ void main() {
       institution: 'CBE',
       openingBalance: 100000,
     );
-    expect(state.entries, isEmpty);
-    expect(state.pendingCount, 1);
-    expect(
-      state.isOlderThanTracking(
-          state.messages.single, state.accounts.single.id),
-      isTrue,
-    );
-
-    final later = await state.ingestBankSms([
-      BankSms(
-        id: 'incoming:after-account',
-        sender: 'CBE',
-        body: 'You received ETB 10.00 from Hana.',
-        receivedAt: DateTime(2026, 10, 22, 12),
-      ),
-    ]);
-    expect(later.imported, 1);
-    expect(state.balanceFor(state.accounts.single.id), 101000);
-  });
-
-  test('alerts from before tracking was turned on stay in review', () async {
-    await state.addAccount(
-      name: 'Telebirr',
-      institution: 'Telebirr',
-      openingBalance: 0,
-    );
-    now = DateTime(2026, 10, 22, 12);
     await state.setBankSmsAutomationEnabled(true);
 
     final summary = await state.ingestBankSms([
       BankSms(
-        id: 'inbox:history',
-        sender: '127',
-        body: 'You have paid ETB 30.00. Your transaction number is HX12AB34CD',
+        id: 'inbox:before-account',
+        sender: 'CBE',
+        body: 'You received ETB 42.00 from Hana. Ref: FT24009ABCDE. '
+            'Your balance is ETB 1,000.00',
         receivedAt: DateTime(2026, 10, 22, 10),
       ),
     ]);
 
-    expect(summary.imported, 0);
-    expect(summary.pending, 1);
-    expect(state.entries, isEmpty);
+    expect(summary.imported, 1);
+    expect(state.pendingCount, 0);
+    expect(state.balanceFor(state.accounts.single.id), 100000);
+    expect(state.monthIncome, 4200);
+  });
+
+  test('alerts left waiting by an older version are added on load', () async {
+    final waiting = PendingSms(
+      id: 'inbox:old',
+      sender: '127',
+      institution: 'Telebirr',
+      body: 'You have paid ETB 30.00.',
+      amount: 3000,
+      direction: SmsDirection.expense,
+      party: 'Telebirr',
+      reference: null,
+      balanceAfter: 50000,
+      receivedAt: DateTime(2026, 10, 20),
+      confidence: SmsConfidence.medium,
+      automaticallyFetched: true,
+    );
+    SharedPreferences.setMockInitialValues({
+      'bankSmsAutomationEnabled': true,
+      'messages': jsonEncode([waiting.toJson()]),
+    });
+    final reopened = AppState(clock: () => now);
+    await reopened.load();
+    // They wait until the person says which banks are theirs.
+    expect(reopened.pendingCount, 1);
+    await reopened.chooseBanks({'Telebirr'});
+
+    expect(reopened.pendingCount, 0);
+    expect(reopened.balanceFor(reopened.accounts.single.id), 50000);
+
+    // The import is saved, so it is not repeated on the next launch.
+    final again = AppState(clock: () => now);
+    await again.load();
+    expect(again.accounts, hasLength(1));
+    expect(again.entries, hasLength(2));
   });
 
   test('two different Telebirr alerts are both imported', () async {
@@ -394,7 +430,7 @@ void main() {
     expect(migrated.entries.map((e) => e.id).toSet(), hasLength(2));
     expect(migrated.accounts.single.createdAt, DateTime(2026, 10, 22, 9));
 
-    // The migration is saved, so the cut-off does not move on later launches.
+    // The migration is saved, so the date does not move on later launches.
     final reopened = AppState(clock: () => DateTime(2026, 10, 25));
     await reopened.load();
     expect(reopened.accounts.single.createdAt, DateTime(2026, 10, 22, 9));
@@ -489,5 +525,156 @@ void main() {
     final restored = AppState();
     await restored.load();
     expect(restored.smsAutomationPrompted, isTrue);
+  });
+
+  test('budgets, targets and loans persist; a 0 limit removes a budget',
+      () async {
+    await state.setBudget('transport', 300000);
+    await state.setBudget('rent', 800000);
+    await state.setBudget('rent', 0);
+    await state.setMonthlyTargets(income: 3500000, spending: 2200000);
+    await state.addLoan(person: 'Dawit', lent: true, amount: 450000);
+    await state.recordLoanPayment(state.loans.single.id, 150000);
+
+    final reopened = AppState(clock: () => now);
+    await reopened.load();
+    expect(reopened.budgets, {'transport': 300000});
+    expect(reopened.incomeTarget, 3500000);
+    expect(reopened.plannedSpending, 2200000);
+    expect(reopened.loans.single.remaining, 300000);
+
+    // Paying more than is owed settles the loan without going negative.
+    await reopened.recordLoanPayment(reopened.loans.single.id, 999999);
+    expect(reopened.loans.single.remaining, 0);
+    expect(reopened.loans.single.settled, isTrue);
+  });
+
+  test('PIN is checked without being stored in plain text', () async {
+    await state.setPin('2580');
+    expect(state.pinHash, isNot(contains('2580')));
+    expect(state.checkPin('2580'), isTrue);
+    expect(state.checkPin('0000'), isFalse);
+    expect(() => state.setPin('12a4'), throwsArgumentError);
+    await state.clearPin();
+    expect(state.hasPin, isFalse);
+  });
+
+  test('backup round-trips the ledger and a bad file changes nothing',
+      () async {
+    await state.addAccount(name: 'CBE', institution: 'CBE', openingBalance: 5);
+    await state.setBudget('rent', 100);
+    await state.addLoan(person: 'Hana', lent: false, amount: 900);
+    await state.setPin('1111');
+    final backup = state.exportBackup();
+
+    await state.clearAllData();
+    expect(state.accounts, isEmpty);
+    expect(state.hasPin, isFalse);
+
+    expect(await state.restoreBackup('{"app":"BirrWise","accounts":[{}]}'),
+        isFalse);
+    expect(await state.restoreBackup('not json'), isFalse);
+    expect(state.accounts, isEmpty);
+
+    expect(await state.restoreBackup(backup), isTrue);
+    expect(state.accounts.single.name, 'CBE');
+    expect(state.budgets, {'rent': 100});
+    expect(state.loans.single.person, 'Hana');
+    // The PIN is a device setting and is never restored from a file.
+    expect(state.hasPin, isFalse);
+  });
+
+  test('saved CBE Birr alerts filed under CBE move to their own wallet',
+      () async {
+    final saved = PendingSms(
+      id: 'inbox:wallet',
+      sender: 'CBEBirr',
+      institution: 'CBE',
+      body: 'You have paid ETB 100.00. Trans ID: CB2481023. '
+          'Current balance is ETB 840.00.',
+      amount: 10000,
+      direction: SmsDirection.expense,
+      party: 'CBE',
+      reference: 'CB2481023',
+      balanceAfter: 84000,
+      receivedAt: DateTime(2026, 10, 21),
+      confidence: SmsConfidence.high,
+      automaticallyFetched: true,
+    );
+    final bank = Account(
+      id: 'bank',
+      name: 'CBE',
+      institution: 'CBE',
+      openingBalance: 500000,
+      createdAt: DateTime(2026, 10, 1),
+    );
+    SharedPreferences.setMockInitialValues({
+      'bankSmsAutomationEnabled': true,
+      'banksChosen': true,
+      'accounts': jsonEncode([bank.toJson()]),
+      'messages': jsonEncode([saved.toJson()]),
+    });
+    final reopened = AppState(clock: () => now);
+    await reopened.load();
+
+    expect(reopened.balanceFor('bank'), 500000);
+    final wallet =
+        reopened.accounts.singleWhere((a) => a.institution == 'CBE Birr');
+    expect(reopened.balanceFor(wallet.id), 84000);
+
+    // A rescan of the same alert is recognized as already seen.
+    final rescan = await reopened.ingestBankSms([
+      BankSms(
+        id: 'inbox:wallet-again',
+        sender: 'CBEBirr',
+        body: saved.body,
+        receivedAt: DateTime(2026, 10, 21),
+      ),
+    ]);
+    expect(rescan.duplicates, 1);
+  });
+
+  test('a bank marked not mine is taken out, and comes back if re-ticked',
+      () async {
+    await state.setBankSmsAutomationEnabled(true);
+    // Created by BirrWise from alerts, and holding only alert entries.
+    await state.ingestBankSms([
+      BankSms(
+        id: 'inbox:dashen',
+        sender: 'DashenBank',
+        body: 'Dashen Alert: A/C *1048 Debited ETB 1,200.00. Txn Ref: DB772314.',
+        receivedAt: DateTime(2026, 10, 22, 10),
+      ),
+    ]);
+    // Added by the person, with a balance they typed.
+    await state.addAccount(
+        name: 'My BOA', institution: 'BOA', openingBalance: 9000);
+    expect(state.accounts.map((a) => a.institution), ['Dashen', 'BOA']);
+
+    await state.chooseBanks({'Telebirr', 'CBE'});
+    expect(state.accounts.single.name, 'My BOA');
+    expect(state.accounts.single.archived, isTrue);
+    expect(state.entries, isEmpty);
+    expect(state.messages.single.status, 'dismissed');
+    expect(state.totalBalance, 0);
+
+    await state.chooseBanks({'Telebirr', 'CBE', 'BOA'});
+    expect(state.accounts.single.archived, isFalse);
+  });
+
+  test('alerts from an unticked bank are ignored', () async {
+    await state.setBankSmsAutomationEnabled(true);
+    await state.chooseBanks({'Telebirr'});
+    final summary = await state.ingestBankSms([
+      BankSms(
+        id: 'inbox:ignored',
+        sender: 'CBE',
+        body: 'You received ETB 50.00. Ref: FT24001ABCDE',
+        receivedAt: DateTime(2026, 10, 22, 10),
+      ),
+    ]);
+    expect(summary.ignored, 1);
+    expect(state.messages, isEmpty);
+    expect(state.accounts, isEmpty);
   });
 }
