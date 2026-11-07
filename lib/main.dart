@@ -161,7 +161,7 @@ class _LoadingScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       FilledButton(
                           onPressed: onRetry, child: const Text('Retry')),
                     ],
@@ -215,7 +215,7 @@ class _BirrWiseShellState extends State<BirrWiseShell> {
                     child: const Icon(Icons.spa_outlined,
                         size: 21, color: BirrColors.heroText),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Text(
                     'BirrWise',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -239,7 +239,7 @@ class _BirrWiseShellState extends State<BirrWiseShell> {
               child: const Icon(Icons.mark_email_unread_outlined),
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
         ],
       ),
       body: SafeArea(

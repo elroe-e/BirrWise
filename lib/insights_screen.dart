@@ -51,7 +51,7 @@ class InsightsScreen extends StatelessWidget {
         score.total == null ? '—' : '$value/$max';
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 104),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
       children: [
         Container(
           decoration: BoxDecoration(
@@ -62,11 +62,11 @@ class InsightsScreen extends StatelessWidget {
               colors: [BirrColors.forest, BirrColors.forestDark],
             ),
           ),
-          padding: const EdgeInsets.all(22),
+          padding: const EdgeInsets.all(24),
           child: Row(
             children: [
               _ScoreGauge(score: score.total),
-              const SizedBox(width: 18),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,11 +74,11 @@ class InsightsScreen extends StatelessWidget {
                     Text(t(lang, 'healthScore'),
                         style: theme.textTheme.labelMedium
                             ?.copyWith(color: BirrColors.goldOnDark)),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(t(lang, score.labelKey),
                         style: theme.textTheme.titleLarge
                             ?.copyWith(color: BirrColors.heroText)),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Text(
                       summary,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -91,9 +91,9 @@ class InsightsScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         SectionHeading(t(lang, 'monthlySnapshot')),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -105,7 +105,7 @@ class InsightsScreen extends StatelessWidget {
                 icon: Icons.south_west_rounded,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: _SummaryCard(
                 label: t(lang, 'expenses'),
@@ -119,11 +119,11 @@ class InsightsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         SectionHeading(t(lang, 'cashFlowTrend')),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         BirrCard(child: _CashFlowChart(state: state)),
         const SizedBox(height: 20),
         SectionHeading(t(lang, 'scoreHowMade')),
-        const SizedBox(height: 9),
+        const SizedBox(height: 8),
         BirrCard(
           child: Column(
             children: [
@@ -155,7 +155,7 @@ class InsightsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         SectionHeading(t(lang, 'suggestions')),
-        const SizedBox(height: 9),
+        const SizedBox(height: 8),
         if (suggestions.isEmpty)
           _SuggestionCard(
             icon: Icons.check_circle_outline,
@@ -198,7 +198,7 @@ class InsightsScreen extends StatelessWidget {
                     children: [
                       Icon(categoryIcon(item.key),
                           size: 19, color: theme.colorScheme.primary),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(t(lang, item.key),
                             style: theme.textTheme.bodyMedium),
@@ -287,7 +287,7 @@ class _CashFlowChart extends StatelessWidget {
                           bar(month.expense, BirrColors.goldDecor),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         month.label.characters.take(3).toString(),
                         style: Theme.of(context).textTheme.labelSmall,
@@ -298,7 +298,7 @@ class _CashFlowChart extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -307,7 +307,7 @@ class _CashFlowChart extends StatelessWidget {
               (BirrColors.goldDecor, 'expenses'),
             ]) ...[
               Container(width: 10, height: 10, color: color),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(t(lang, key), style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(width: 16),
             ],
@@ -404,7 +404,7 @@ class _SummaryCard extends StatelessWidget {
             Icon(icon, color: color),
             const SizedBox(height: 8),
             Text(label, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -437,7 +437,7 @@ class _ScoreFactor extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(height: 7),
+                const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(5),
                   child: LinearProgressIndicator(
@@ -450,7 +450,7 @@ class _ScoreFactor extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Text(points, style: Theme.of(context).textTheme.labelLarge),
         ],
       );
@@ -471,13 +471,13 @@ class _SuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 9),
+        padding: const EdgeInsets.only(bottom: 8),
         child: BirrCard(
-          padding: const EdgeInsets.fromLTRB(13, 13, 8, 13),
+          padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
           child: Row(
             children: [
               Icon(icon, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(child: Text(text)),
               if (actionLabel != null && onAction != null)
                 TextButton(

@@ -190,7 +190,7 @@ class _SmsInboxScreenState extends State<SmsInboxScreen> {
                       if (currentStatus == 'pending' &&
                           confirmAllCandidates.length >= 2)
                         Padding(
-                          padding: const EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.only(top: 12),
                           child: FilledButton.icon(
                             style: FilledButton.styleFrom(
                                 minimumSize: const Size(48, 48)),
@@ -346,7 +346,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
             ? BirrColors.expense
             : BirrColors.goldDeep;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 13),
+      padding: const EdgeInsets.only(bottom: 12),
       child: BirrCard(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -355,7 +355,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
             Row(
               children: [
                 InstitutionBadge(message.institution),
-                const SizedBox(width: 11),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,7 +377,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 17),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Flexible(
@@ -406,7 +406,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
                       ? 'የግብይት አይነት ይምረጡ'
                       : 'Choose transaction direction',
                   style: theme.textTheme.bodySmall),
-              const SizedBox(height: 7),
+              const SizedBox(height: 8),
               SegmentedButton<SmsDirection>(
                 segments: [
                   ButtonSegment(
@@ -426,7 +426,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
               ),
             ],
             if (pending && activeAccounts.isNotEmpty) ...[
-              const SizedBox(height: 13),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 // Rebuilt when the resolved account changes.
                 key: ValueKey(selectedAccountId),
@@ -447,10 +447,10 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
               ),
               if (selectedAccountId != null &&
                   state.isOlderThanTracking(message, selectedAccountId)) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 _OlderAlertNote(text: t(lang, 'olderThanTracking')),
               ],
-              const SizedBox(height: 11),
+              const SizedBox(height: 12),
               TextFormField(
                 initialValue: party,
                 decoration: InputDecoration(
@@ -459,7 +459,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
                 ),
                 onChanged: (value) => party = value,
               ),
-              const SizedBox(height: 11),
+              const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: category,
                 decoration: InputDecoration(
@@ -487,7 +487,7 @@ class _SmsReviewCardState extends State<_SmsReviewCard> {
                 label: Text(t(lang, 'addAccount')),
               ),
             ],
-            const SizedBox(height: 7),
+            const SizedBox(height: 8),
             TextButton.icon(
               style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
               onPressed: widget.onExpand,
@@ -668,7 +668,7 @@ class _OlderAlertNote extends StatelessWidget {
           children: [
             const Icon(Icons.info_outline,
                 size: 20, color: BirrColors.onGoldSoft),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 text,

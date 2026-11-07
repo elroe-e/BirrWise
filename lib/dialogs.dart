@@ -42,7 +42,7 @@ Future<bool> showAddAccountDialog(BuildContext context, AppState state) async {
                   hintText: 'e.g. Everyday spending',
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: institution,
                 decoration: InputDecoration(
@@ -54,7 +54,7 @@ Future<bool> showAddAccountDialog(BuildContext context, AppState state) async {
                 onChanged: (value) =>
                     setModalState(() => institution = value ?? 'Cash'),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               TextField(
                 controller: opening,
                 keyboardType:
@@ -67,13 +67,13 @@ Future<bool> showAddAccountDialog(BuildContext context, AppState state) async {
                   prefixText: 'ETB  ',
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               TextField(
                 controller: number,
                 decoration: InputDecoration(
                     labelText: t(state.language, 'maskedNumber')),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -190,7 +190,7 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(t(lang, 'add'), style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             SegmentedButton<EntryType>(
               segments: [
                 ButtonSegment(
@@ -214,7 +214,7 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                   setState(() => type = selection.first),
               showSelectedIcon: false,
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             Center(
               child: TextField(
                 controller: amountController,
@@ -249,7 +249,7 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
               onSelected: (id) => setState(() => accountId = id),
             ),
             if (type == EntryType.transferOut) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Text(t(lang, 'toAccount'), style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               _AccountPicker(
@@ -259,7 +259,7 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
               ),
             ],
             if (type != EntryType.transferOut) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Text(t(lang, 'category'), style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               _CategoryPicker(
@@ -276,7 +276,7 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                   onChanged: (value) => setState(() => business = value),
                 ),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             TextField(
               controller: noteController,
               textCapitalization: TextCapitalization.sentences,
@@ -431,7 +431,7 @@ class _CategoryPicker extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             onTap: () => onSelected(key),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primaryContainer
@@ -481,7 +481,7 @@ Future<void> showAddGoalDialog(BuildContext context, AppState state) async {
         children: [
           Text(t(state.language, 'newGoal'),
               style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           TextField(
             controller: title,
             decoration:
@@ -548,7 +548,7 @@ Future<void> showAddBillDialog(BuildContext context, AppState state) async {
         children: [
           Text(t(state.language, 'newBill'),
               style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           TextField(
               controller: title,
               decoration:

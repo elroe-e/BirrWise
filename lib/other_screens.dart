@@ -67,7 +67,7 @@ class HubScreen extends StatelessWidget {
       ),
     ];
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 104),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 104),
       children: [
         Text(t(lang, 'tools'),
             style: Theme.of(context).textTheme.headlineSmall),
@@ -86,7 +86,7 @@ class HubScreen extends StatelessWidget {
             final item = tiles[index];
             return BirrCard(
               onTap: item.onTap,
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -340,11 +340,11 @@ class SettingsScreen extends StatelessWidget {
       children: [
         Text(t(lang, 'settingsTitle'),
             style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         _SettingsGroup(
           title: t(lang, 'language'),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: 'en', label: Text('English')),
@@ -356,7 +356,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: t(lang, 'appearance'),
           children: [
@@ -383,7 +383,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: lang == 'am' ? 'ድምፅ እና ንዝረት' : 'Sound and haptics',
           children: [
@@ -400,7 +400,7 @@ class SettingsScreen extends StatelessWidget {
               onChanged: (value) => state.setPreference('haptics', value),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Wrap(
                 spacing: 10,
                 runSpacing: 8,
@@ -423,7 +423,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: lang == 'am' ? 'ራስ-ሰር ክትትል' : 'Bank SMS automation',
           children: [
@@ -436,7 +436,7 @@ class SettingsScreen extends StatelessWidget {
                   unawaited(_setBankSmsAutomation(context, state, enabled)),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -446,7 +446,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   if (!state.smsHistoryScanned &&
                       state.bankSmsAutomationEnabled) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       t(lang, 'smsHistoryOnce'),
                       style: Theme.of(context).textTheme.bodySmall,
@@ -455,7 +455,7 @@ class SettingsScreen extends StatelessWidget {
                   if (state.lastSmsIngestSummary case final summary?
                       when state.bankSmsAutomationEnabled &&
                           state.smsAutomationStatus == 'ready') ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       summary.scanned == 0
                           ? t(lang, 'smsNoBankSenders')
@@ -472,7 +472,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                   if (state.smsAutomationError != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       state.smsAutomationError!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -491,7 +491,7 @@ class SettingsScreen extends StatelessWidget {
                     onTap: () => showBankPicker(context, state),
                   ),
                   if (state.bankSmsAutomationEnabled) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: TextButton.icon(
@@ -507,7 +507,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: lang == 'am' ? 'የኤስኤምኤስ ግላዊነት' : 'Detection',
           child: ListTile(
@@ -521,12 +521,12 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => showImportSmsDialog(context, state),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: t(lang, 'shopPayments'),
           child: _ShopLinkTile(state: state),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: t(lang, 'security'),
           child: ListTile(
@@ -540,7 +540,7 @@ class SettingsScreen extends StatelessWidget {
                 : _setPin(context, state),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SettingsGroup(
           title: lang == 'am' ? 'ውሂብ' : 'Data',
           children: [
@@ -562,7 +562,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         GestureDetector(
           onTap: () => showAboutDialog(
             context: context,

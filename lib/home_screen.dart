@@ -24,11 +24,6 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = state.language;
     final now = DateTime.now();
-    final greeting = now.hour < 12
-        ? t(lang, 'goodMorning')
-        : now.hour < 17
-            ? t(lang, 'goodAfternoon')
-            : t(lang, 'goodEvening');
     final hasData = state.accounts.isNotEmpty || state.entries.isNotEmpty;
     final period = '${now.year}-${now.month.toString().padLeft(2, '0')}';
     final upcoming = [
@@ -41,29 +36,27 @@ class HomeScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 104),
       children: [
-        Text(greeting, style: Theme.of(context).textTheme.headlineSmall),
+        // The period is the title: a greeting says nothing about money.
         Text(
           monthLabel(
             now,
             ethiopian: state.useEthiopianCalendar,
             language: lang,
           ),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
         if (state.pendingCount > 0) ...[
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           _PendingBanner(
             count: state.pendingCount,
             language: lang,
             onTap: onInbox,
           ),
         ],
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         HeroBalanceCard(state: state),
         if (!hasData) ...[
-          const SizedBox(height: 26),
+          const SizedBox(height: 24),
           EmptyState(
             title: t(lang, 'emptyHome'),
             message: t(lang, 'noAccounts'),
@@ -71,13 +64,13 @@ class HomeScreen extends StatelessWidget {
             onAction: () => showAddEntrySheet(context, state),
           ),
         ] else ...[
-          const SizedBox(height: 25),
+          const SizedBox(height: 24),
           SectionHeading(
             t(lang, 'accounts'),
             action: t(lang, 'add'),
             onAction: () => showAddAccountDialog(context, state),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
             height: 148,
             child: ListView.separated(
@@ -99,7 +92,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           if (upcoming.isNotEmpty) ...[
-            const SizedBox(height: 25),
+            const SizedBox(height: 24),
             SectionHeading(
               t(lang, 'upcomingBills'),
               action: t(lang, 'seeAll'),
@@ -136,7 +129,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
           ],
-          const SizedBox(height: 25),
+          const SizedBox(height: 24),
           SectionHeading(
             t(lang, 'recent'),
             action: t(lang, 'seeAll'),
@@ -226,9 +219,9 @@ class _AccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 174,
+        width: 176,
         child: BirrCard(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -321,7 +314,7 @@ class _UpcomingBillTile extends StatelessWidget {
                 ? (state.language == 'am' ? 'ዛሬ' : 'Due today')
                 : '${t(state.language, 'due')} $due ${state.language == 'am' ? 'ቀን' : 'days'}';
     return BirrCard(
-      padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       child: Row(
         children: [
           Container(
@@ -333,7 +326,7 @@ class _UpcomingBillTile extends StatelessWidget {
             ),
             child: const Icon(Icons.receipt_long_outlined),
           ),
-          const SizedBox(width: 11),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,7 +403,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 6),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
             child: TextField(
               controller: search,
               onChanged: (_) => setState(() {}),
@@ -460,7 +453,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         if (i == 0 ||
                             !_sameDay(results[i - 1].date, results[i].date))
                           Padding(
-                            padding: const EdgeInsets.only(top: 12, bottom: 6),
+                            padding: const EdgeInsets.only(top: 12, bottom: 8),
                             child: Text(
                               _dayLabel(
                                 results[i].date,

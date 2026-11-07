@@ -42,7 +42,7 @@ class AccountsScreen extends StatelessWidget {
                     children: [
                       for (final account in ordered)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.only(bottom: 12),
                           child: _AccountTile(account: account, state: state),
                         ),
                     ],
@@ -63,7 +63,7 @@ class _AccountTile extends StatelessWidget {
     final lang = state.language;
     final theme = Theme.of(context);
     return BirrCard(
-      padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
       child: Row(
         children: [
           InstitutionBadge(account.institution),

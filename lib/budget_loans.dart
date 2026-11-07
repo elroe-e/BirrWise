@@ -23,7 +23,7 @@ class BudgetView extends StatelessWidget {
     final spent = state.monthExpensesByCategory();
     final hidden = state.hideBalances;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 104),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
       children: [
         SectionHeading(
           t(lang, 'monthlyTarget'),
@@ -32,7 +32,7 @@ class BudgetView extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         BirrCard(
-          padding: const EdgeInsets.all(17),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               _ProgressLine(
@@ -42,7 +42,7 @@ class BudgetView extends StatelessWidget {
                 hidden: hidden,
                 goodWhenFull: true,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               _ProgressLine(
                 label: t(lang, 'plannedSpending'),
                 value: state.monthExpenses,
@@ -52,7 +52,7 @@ class BudgetView extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         SectionHeading(
           t(lang, 'categoryBudgets'),
           action: t(lang, 'add'),
@@ -66,10 +66,10 @@ class BudgetView extends StatelessWidget {
           for (final MapEntry(key: category, value: limit)
               in state.budgets.entries)
             Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 12),
               child: BirrCard(
                 onTap: () => _editBudget(context, category),
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(16),
                 child: _ProgressLine(
                   icon: categoryIcon(category),
                   label: t(lang, category),
@@ -156,7 +156,7 @@ class LoansView extends StatelessWidget {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 104),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
       children: [
         SectionHeading(
           t(lang, 'loans'),
@@ -173,7 +173,7 @@ class LoansView extends StatelessWidget {
                 color: BirrColors.income,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: _Total(
                 label: t(lang, 'youOwe'),
@@ -183,12 +183,12 @@ class LoansView extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         for (final loan in [...active, ...settled])
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 12),
             child: BirrCard(
-              padding: const EdgeInsets.fromLTRB(15, 12, 6, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
               child: Row(
                 children: [
                   Icon(
@@ -262,7 +262,7 @@ class LoansView extends StatelessWidget {
               onSelectionChanged: (value) =>
                   setHeaderState(() => lent = value.first),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             TextField(
               controller: person,
               textCapitalization: TextCapitalization.words,
@@ -306,7 +306,7 @@ class _Total extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BirrCard(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -425,7 +425,7 @@ Future<List<int>?> _amountSheet(
             children: [
               Text(title, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 16),
-              if (header != null) ...[header, const SizedBox(height: 14)],
+              if (header != null) ...[header, const SizedBox(height: 16)],
               for (final (index, (label, _)) in fields.indexed) ...[
                 TextField(
                   controller: controllers[index],

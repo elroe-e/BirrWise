@@ -87,8 +87,8 @@ ThemeData birrTheme({required bool dark, required bool amharic}) {
         dark ? BirrColors.darkBackground : BirrColors.ivory,
     fontFamily: null,
     textTheme: TextTheme(
-      headlineSmall: text(22, weight: FontWeight.bold, serif: true),
-      titleLarge: text(20, weight: FontWeight.bold, serif: true),
+      headlineSmall: text(22, weight: FontWeight.w600, serif: true),
+      titleLarge: text(20, weight: FontWeight.w600, serif: true),
       titleMedium: text(16, weight: FontWeight.w600),
       bodyLarge: text(16),
       bodyMedium: text(14),

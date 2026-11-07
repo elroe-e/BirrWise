@@ -71,7 +71,7 @@ class _PlanScreenState extends State<PlanScreen> {
             onAction: () => showAddGoalDialog(context, state),
           )
         : ListView(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 104),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
             children: [
               SectionHeading(
                 t(state.language, 'goals'),
@@ -84,9 +84,9 @@ class _PlanScreenState extends State<PlanScreen> {
                 final progress =
                     (saved / goal.target).clamp(0.0, 1.0).toDouble();
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: BirrCard(
-                    padding: const EdgeInsets.all(17),
+                    padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
                         Row(
@@ -104,13 +104,13 @@ class _PlanScreenState extends State<PlanScreen> {
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium),
-                                  const SizedBox(height: 5),
+                                  const SizedBox(height: 4),
                                   Text(
                                     '${formatEtb(saved, hidden: state.hideBalances)} / ${formatEtb(goal.target, hidden: state.hideBalances)}',
                                     style:
                                         Theme.of(context).textTheme.bodySmall,
                                   ),
-                                  const SizedBox(height: 9),
+                                  const SizedBox(height: 8),
                                   Text(
                                     saved == 0
                                         ? (state.language == 'am'
@@ -118,8 +118,8 @@ class _PlanScreenState extends State<PlanScreen> {
                                             : 'Start with a small deposit')
                                         : saved >= goal.target
                                             ? (state.language == 'am'
-                                                ? 'ግቡ ተሳክቷል!'
-                                                : 'Goal reached — well done!')
+                                                ? 'ግቡ ተሳክቷል'
+                                                : 'Goal reached')
                                             : (state.language == 'am'
                                                 ? '${formatEtb(goal.target - saved, hidden: state.hideBalances)} ቀርቷል'
                                                 : '${formatEtb(goal.target - saved, hidden: state.hideBalances)} to go'),
@@ -136,9 +136,9 @@ class _PlanScreenState extends State<PlanScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 13),
+                        const SizedBox(height: 12),
                         _Milestones(progress: progress),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         Align(
                           alignment: Alignment.centerRight,
                           child: FilledButton.tonalIcon(
@@ -177,7 +177,7 @@ class _PlanScreenState extends State<PlanScreen> {
         .toList();
     final upcoming = unpaid.where((b) => b.dueDay > now.day + 7).toList();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 104),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 104),
       children: [
         SectionHeading(
           t(state.language, 'bills'),
@@ -237,7 +237,7 @@ class _PlanScreenState extends State<PlanScreen> {
             children: [
               Text('${t(state.language, 'deposit')} · ${goal.title}',
                   style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               Wrap(
                 spacing: 8,
                 children: [500, 1000, 5000].map((value) {
@@ -269,7 +269,7 @@ class _PlanScreenState extends State<PlanScreen> {
                   error = null;
                 }),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Text(t(state.language, 'fromAccount'),
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
@@ -286,7 +286,7 @@ class _PlanScreenState extends State<PlanScreen> {
                     ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               SizedBox(
                 height: 52,
                 width: double.infinity,
@@ -425,7 +425,7 @@ class _BillGroupTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
+        padding: const EdgeInsets.fromLTRB(0, 20, 0, 8),
         child: Text(title,
             style: Theme.of(context)
                 .textTheme
@@ -447,9 +447,9 @@ class _BillRow extends StatelessWidget {
     final paid = bill.lastPaidPeriod == period;
     final overdue = !paid && bill.dueDay < DateTime.now().day;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.only(bottom: 8),
       child: BirrCard(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Container(

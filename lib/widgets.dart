@@ -89,7 +89,7 @@ class StatusChip extends StatelessWidget {
       ChipTone.danger => (BirrColors.dangerSoft, BirrColors.onDangerSoft),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(40),
@@ -167,11 +167,6 @@ class HeroBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hidden = state.hideBalances;
-    final month = monthLabel(
-      DateTime.now(),
-      ethiopian: state.useEthiopianCalendar,
-      language: state.language,
-    );
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -182,7 +177,7 @@ class HeroBalanceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: BirrColors.heroText.withValues(alpha: .08)),
       ),
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -197,7 +192,7 @@ class HeroBalanceCard extends StatelessWidget {
                             Theme.of(context).textTheme.labelMedium?.copyWith(
                                   color: BirrColors.goldOnDark,
                                 )),
-                    Text('${t(state.language, 'thisMonth')} · $month',
+                    Text(t(state.language, 'thisMonth'),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: BirrColors.heroText.withValues(alpha: .72),
                             )),
@@ -229,7 +224,7 @@ class HeroBalanceCard extends StatelessWidget {
                 fontFamily: 'serif',
                 fontSize: 34,
                 height: 1.3,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: BirrColors.heroText,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -237,9 +232,9 @@ class HeroBalanceCard extends StatelessWidget {
                   hidden ? t(state.language, 'balanceHiddenSpoken') : null,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
           Divider(color: BirrColors.heroText.withValues(alpha: .16), height: 1),
-          const SizedBox(height: 15),
+          const SizedBox(height: 16),
           Row(
             children: [
               _HeroStat(
@@ -289,7 +284,7 @@ class _HeroStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(
         child: Padding(
-          padding: const EdgeInsetsDirectional.only(end: 10),
+          padding: const EdgeInsetsDirectional.only(end: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -398,7 +393,7 @@ class TransactionRow extends StatelessWidget {
                           ),
                         ),
                         if (entry.source == EntrySource.sms) ...[
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           const StatusChip('SMS', tone: ChipTone.success),
                         ],
                       ],
@@ -415,7 +410,7 @@ class TransactionRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Text(
                 '$sign${formatEtb(amount, hidden: state.hideBalances, withCode: false)}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -512,7 +507,7 @@ class InstitutionBadge extends StatelessWidget {
         style: TextStyle(
           // Darkened so the letters stay readable on the light tint.
           color: Color.lerp(color, Colors.black, .3),
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           fontSize:
               radius * switch (monogram.length) { 1 => .8, 2 => .62, _ => .5 },
         ),

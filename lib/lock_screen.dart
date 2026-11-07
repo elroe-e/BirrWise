@@ -63,7 +63,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
               const Icon(Icons.lock_outline, size: 40, color: BirrColors.forest),
               const SizedBox(height: 12),
               Text('BirrWise', style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(t(lang, 'pinEnter'), style: theme.textTheme.bodyMedium),
               const SizedBox(height: 20),
               Semantics(
@@ -91,7 +91,7 @@ class _PinLockScreenState extends State<PinLockScreen> {
                 height: 32,
                 child: wrong
                     ? Padding(
-                        padding: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.only(top: 12),
                         child: Text(
                           t(lang, 'pinWrong'),
                           style: theme.textTheme.bodySmall
@@ -153,7 +153,7 @@ Future<void> showWelcome(BuildContext context, AppState state) =>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(t(lang, 'welcomeSubtitle')),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   Text(t(lang, 'chooseLanguage'),
                       style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
@@ -167,13 +167,13 @@ Future<void> showWelcome(BuildContext context, AppState state) =>
                     onSelectionChanged: (value) =>
                         state.setLanguage(value.first),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(Icons.verified_user_outlined,
                           color: BirrColors.forest),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
