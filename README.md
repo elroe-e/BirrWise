@@ -34,8 +34,13 @@ New alerts are checked when BirrWise opens or resumes.
 New-alert detection is handled locally by Android while BirrWise is closed;
 messages are queued on the device and imported on the next app launch or resume.
 No SMS content leaves the phone.
-The debug APK includes Android's `INTERNET` permission for Flutter development
-and debugging tools; the app itself makes no network requests.
+BirrWise makes no network requests unless you link a shop (Settings → Shop
+payments). Then, when an incoming-money alert arrives, the Android receiver
+sends its amounts, bank and time to that shop's Supabase function
+`claim_shop_payment`, which marks a staff-entered expected payment as received
+when the amount matches and stores nothing otherwise. Spending alerts, message
+text and balances other than as candidate amounts are never sent. Failed sends
+are retried for up to two days.
 
 An alert is added without confirmation when its amount and direction are clear
 and exactly one non-archived account matches its institution; a reference is

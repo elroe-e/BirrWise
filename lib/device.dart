@@ -54,3 +54,30 @@ Future<T> _picking<T>(Future<T> Function() action) async {
     filePickerOpen = false;
   }
 }
+
+/// Links this phone to the shop's Payments page with the code shown there.
+Future<bool> linkShop(String code) async =>
+    await _channel.invokeMethod<bool>('linkShop', {'code': code}) == true;
+
+Future<void> unlinkShop() => _channel.invokeMethod<void>('unlinkShop');
+
+Future<bool> shopLinked() async {
+  if (!Platform.isAndroid) return false;
+  try {
+    return await _channel.invokeMethod<bool>('shopLinked') == true;
+  } on MissingPluginException {
+    return false;
+  }
+}
+
+/// Retries shop payments that could not be sent when their alert arrived.
+Future<void> flushShop() async {
+  if (!Platform.isAndroid) return;
+  try {
+    await _channel.invokeMethod<void>('flushShop');
+  } on PlatformException {
+    // Retried on the next alert or the next time BirrWise opens.
+  } on MissingPluginException {
+    // Not available off Android.
+  }
+}

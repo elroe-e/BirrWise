@@ -523,6 +523,11 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _SettingsGroup(
+          title: t(lang, 'shopPayments'),
+          child: _ShopLinkTile(state: state),
+        ),
+        const SizedBox(height: 14),
+        _SettingsGroup(
           title: t(lang, 'security'),
           child: ListTile(
             minTileHeight: 64,
@@ -562,11 +567,11 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => showAboutDialog(
             context: context,
             applicationName: 'BirrWise',
-            applicationVersion: '1.2.0',
+            applicationVersion: '1.3.0',
             applicationLegalese: 'Private, offline-first finance tracking.',
           ),
           child: Text(
-            'BirrWise · 1.2.0',
+            'BirrWise · 1.3.0',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -712,6 +717,121 @@ Future<void> _removePin(BuildContext context, AppState state) async {
   if (off == true) await state.clearPin();
 }
 
+/// Links BirrWise to the shop's Payments page, so staff see when a customer's
+/// money reaches the owner's account.
+class _ShopLinkTile extends StatefulWidget {
+  const _ShopLinkTile({required this.state});
+
+  final AppState state;
+
+  @override
+  State<_ShopLinkTile> createState() => _ShopLinkTileState();
+}
+
+class _ShopLinkTileState extends State<_ShopLinkTile> {
+  bool linked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    shopLinked().then((value) {
+      if (mounted) setState(() => linked = value);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = widget.state.language;
+    return ListTile(
+      minTileHeight: 64,
+      leading: const Icon(Icons.storefront_outlined),
+      title: Text(t(lang, linked ? 'shopLinkedOn' : 'shopLinkedOff')),
+      subtitle: Text(t(lang, 'shopPaymentsSub')),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => linked ? _unlink(context) : _link(context),
+    );
+  }
+
+  Future<void> _link(BuildContext context) async {
+    final lang = widget.state.language;
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t(lang, 'shopPayments')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(t(lang, 'shopPasteCode')),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              decoration: InputDecoration(labelText: t(lang, 'shopCode')),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t(lang, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(t(lang, 'save')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (code == null || code.trim().isEmpty || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    var ok = false;
+    try {
+      ok = await linkShop(code);
+    } on PlatformException {
+      ok = false;
+    } on MissingPluginException {
+      ok = false;
+    }
+    if (!mounted) return;
+    setState(() => linked = ok);
+    messenger.showSnackBar(SnackBar(
+      content: Text(t(
+          lang,
+          !ok
+              ? 'shopLinkInvalid'
+              : widget.state.bankSmsAutomationEnabled
+                  ? 'shopLinkDone'
+                  : 'shopNeedsTracking')),
+    ));
+  }
+
+  Future<void> _unlink(BuildContext context) async {
+    final lang = widget.state.language;
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t(lang, 'shopPayments')),
+        content: Text(t(lang, 'shopUnlinkConfirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(t(lang, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(t(lang, 'turnOff')),
+          ),
+        ],
+      ),
+    );
+    if (sure != true) return;
+    await unlinkShop();
+    if (mounted) setState(() => linked = false);
+  }
+}
+
 Future<void> _eraseAll(BuildContext context, AppState state) async {
   final lang = state.language;
   final sure = await showDialog<bool>(
@@ -742,6 +862,7 @@ Future<void> _eraseAll(BuildContext context, AppState state) async {
         SnackBar(content: Text(t(state.language, 'smsSyncFailed'))));
     return;
   }
+  await unlinkShop();
   await state.clearAllData();
   messenger.showSnackBar(SnackBar(content: Text(t(state.language, 'erased'))));
 }

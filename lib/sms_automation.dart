@@ -77,6 +77,7 @@ class SmsAutomationService {
       final incoming = await _readIncomingBankSms();
       messages.addAll(incoming);
 
+      unawaited(flushShop());
       final summary = await state.ingestBankSms(messages);
       if (summary.imported > 0) unawaited(playSound(state, 'sms'));
       if (!state.smsHistoryScanned) await state.markSmsHistoryScanned();

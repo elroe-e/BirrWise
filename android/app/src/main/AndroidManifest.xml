@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <!-- Only used to confirm shop payments when the owner links the shop. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="BirrWise"

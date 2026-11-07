@@ -18,7 +18,7 @@ class BankSmsReceiver : BroadcastReceiver() {
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         if (messages.isEmpty()) return
         val sender = messages.firstOrNull()?.originatingAddress ?: return
-        if (BankSmsInbox.trustedInstitution(sender) == null) return
+        val institution = BankSmsInbox.trustedInstitution(sender) ?: return
         val body = messages.joinToString(separator = "") { it.messageBody.orEmpty() }
         if (body.isBlank()) return
         // Use the device's receive time, like the SMS inbox does. The
@@ -38,6 +38,17 @@ class BankSmsReceiver : BroadcastReceiver() {
         queue.put(incoming)
         check(preferences.edit().putString(BankSmsInbox.QUEUE_KEY, queue.toString()).commit()) {
             "Could not save an incoming bank alert."
+        }
+        // Tell the shop now, not when BirrWise is next opened.
+        if (ShopPayments.isLinked(context)) {
+            val pending = goAsync()
+            Thread {
+                try {
+                    ShopPayments.onAlert(context, institution, body, receivedAt)
+                } finally {
+                    pending.finish()
+                }
+            }.start()
         }
     }
 

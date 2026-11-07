@@ -40,6 +40,18 @@ class MainActivity : FlutterActivity() {
                         result,
                     )
                     "openDocument" -> openDocument(result)
+                    "linkShop" -> result.success(
+                        ShopPayments.link(this, call.argument<String>("code").orEmpty()),
+                    )
+                    "unlinkShop" -> {
+                        ShopPayments.unlink(this)
+                        result.success(null)
+                    }
+                    "shopLinked" -> result.success(ShopPayments.isLinked(this))
+                    "flushShop" -> {
+                        Thread { ShopPayments.flush(applicationContext) }.start()
+                        result.success(null)
+                    }
                     "setSmsAutomationEnabled" -> {
                         val enabled = call.argument<Boolean>("enabled")
                             ?: run {

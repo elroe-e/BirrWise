@@ -307,7 +307,7 @@ const _strings = <String, Map<String, String>>{
     'erased':
         'All BirrWise data was erased.',
     'privacyPolicyBody':
-        '1. Everything stays on this phone. BirrWise has no account, no server and no analytics, and it sends nothing anywhere.\n\n2. SMS access is used only to find transactions in alerts from the banks and wallets you keep ticked in Settings. Personal messages are never read or saved.\n\n3. Clear alerts are added to your accounts automatically; unclear ones wait for you in the SMS inbox. Turning tracking off in Settings stops it at once.\n\n4. Backups and CSV exports are saved only where you choose. They are not encrypted, so keep those files private.\n\n5. Android backup is turned off for BirrWise data. Erase all data in Settings removes everything.\n\n6. Google Play restricts SMS permissions, so this build is meant to be installed directly.',
+        '1. Everything stays on this phone. BirrWise has no account, no server and no analytics. The only exception is Shop payments, if you link your own shop: then the amounts of incoming-money alerts are sent to your shop website, which keeps one only when it matches a payment your staff are waiting for.\n\n2. SMS access is used only to find transactions in alerts from the banks and wallets you keep ticked in Settings. Personal messages are never read or saved.\n\n3. Clear alerts are added to your accounts automatically; unclear ones wait for you in the SMS inbox. Turning tracking off in Settings stops it at once.\n\n4. Backups and CSV exports are saved only where you choose. They are not encrypted, so keep those files private.\n\n5. Android backup is turned off for BirrWise data. Erase all data in Settings removes everything.\n\n6. Google Play restricts SMS permissions, so this build is meant to be installed directly.',
     'understood':
         'I understand',
     'pinWrong':
@@ -340,6 +340,26 @@ const _strings = <String, Map<String, String>>{
         'Alerts found: {count}',
     'done':
         'Done',
+    'shopPayments':
+        'Shop payments',
+    'shopPaymentsSub':
+        'Let your shop staff see when a customer payment reaches your account',
+    'shopLinkedOn':
+        'Linked to your shop',
+    'shopLinkedOff':
+        'Link to your shop',
+    'shopPasteCode':
+        'On your shop website, open Payments and tap Create link code, then paste it here. Only incoming-money amounts are sent, and the shop keeps one only when it matches a payment your staff are waiting for.',
+    'shopCode':
+        'Link code',
+    'shopLinkInvalid':
+        'That code did not work. Create a new one on the shop website.',
+    'shopLinkDone':
+        'Linked. Matching payments now show on the shop website.',
+    'shopNeedsTracking':
+        'Linked. Turn on bank SMS tracking so payments can be confirmed.',
+    'shopUnlinkConfirm':
+        'Stop confirming payments for your shop on this phone?',
   },
   'am': {
     'home': 'ዋና ገጽ',
@@ -640,7 +660,7 @@ const _strings = <String, Map<String, String>>{
     'erased':
         'መረጃዎች በሙሉ ጠፍተዋል።',
     'privacyPolicyBody':
-        '1. ሁሉም መረጃ በዚህ ስልክ ላይ ብቻ ይቀመጣል። ብርዋይዝ መለያ፣ ሰርቨር ወይም የአጠቃቀም ክትትል የለውም፤ ምንም ነገር ወደ ውጭ አይልክም።\n\n2. የSMS ፈቃድ የሚውለው በቅንብሮች ውስጥ ከመረጧቸው ባንኮችና ዋሌቶች የሚመጡ መልዕክቶችን ግብይት ለመለየት ብቻ ነው። የግል መልዕክቶች አይነበቡም፣ አይቀመጡም።\n\n3. ግልጽ መልዕክቶች በራሳቸው ወደ ሂሳቦችዎ ይመዘገባሉ፤ ግልጽ ያልሆኑት በSMS መልዕክቶች ውስጥ እርስዎን ይጠብቃሉ። በቅንብሮች ውስጥ ክትትሉን ሲያጠፉ ወዲያውኑ ይቆማል።\n\n4. የመረጃ ቅጂዎችና የCSV ፋይሎች እርስዎ በመረጡት ቦታ ብቻ ይቀመጣሉ። አልተመሰጠሩም፤ ስለዚህ ፋይሎቹን በሚስጥር ይያዙ።\n\n5. የAndroid ምትኬ ለብርዋይዝ መረጃ ጠፍቷል። በቅንብሮች ውስጥ «ሁሉንም መረጃዎች ሰርዝ» ሁሉንም ያጠፋል።\n\n6. Google Play የSMS ፈቃዶችን ይገድባል፤ ይህ ስሪት በቀጥታ ለመጫን የተዘጋጀ ነው።',
+        '1. ሁሉም መረጃ በዚህ ስልክ ላይ ብቻ ይቀመጣል። ብርዋይዝ መለያ፣ ሰርቨር ወይም የአጠቃቀም ክትትል የለውም። ብቸኛው ልዩነት የሱቅ ክፍያዎች ነው፤ የራስዎን ሱቅ ካገናኙ የገቢ መልዕክቶች መጠን ወደ ሱቅዎ ድረ-ገጽ ይላካል፤ ሱቁ የሚያስቀምጠው ሰራተኞችዎ ከሚጠብቁት ክፍያ ጋር ሲዛመድ ብቻ ነው።\n\n2. የSMS ፈቃድ የሚውለው በቅንብሮች ውስጥ ከመረጧቸው ባንኮችና ዋሌቶች የሚመጡ መልዕክቶችን ግብይት ለመለየት ብቻ ነው። የግል መልዕክቶች አይነበቡም፣ አይቀመጡም።\n\n3. ግልጽ መልዕክቶች በራሳቸው ወደ ሂሳቦችዎ ይመዘገባሉ፤ ግልጽ ያልሆኑት በSMS መልዕክቶች ውስጥ እርስዎን ይጠብቃሉ። በቅንብሮች ውስጥ ክትትሉን ሲያጠፉ ወዲያውኑ ይቆማል።\n\n4. የመረጃ ቅጂዎችና የCSV ፋይሎች እርስዎ በመረጡት ቦታ ብቻ ይቀመጣሉ። አልተመሰጠሩም፤ ስለዚህ ፋይሎቹን በሚስጥር ይያዙ።\n\n5. የAndroid ምትኬ ለብርዋይዝ መረጃ ጠፍቷል። በቅንብሮች ውስጥ «ሁሉንም መረጃዎች ሰርዝ» ሁሉንም ያጠፋል።\n\n6. Google Play የSMS ፈቃዶችን ይገድባል፤ ይህ ስሪት በቀጥታ ለመጫን የተዘጋጀ ነው።',
     'understood':
         'ተረድቻለሁ',
     'pinWrong':
@@ -673,6 +693,26 @@ const _strings = <String, Map<String, String>>{
         'የተገኙ መልዕክቶች: {count}',
     'done':
         'ጨርሻለሁ',
+    'shopPayments':
+        'የሱቅ ክፍያዎች',
+    'shopPaymentsSub':
+        'የደንበኛ ክፍያ ወደ ሂሳብዎ ሲገባ የሱቅዎ ሰራተኞች እንዲያዩ ያድርጉ',
+    'shopLinkedOn':
+        'ከሱቅዎ ጋር ተገናኝቷል',
+    'shopLinkedOff':
+        'ከሱቅዎ ጋር ያገናኙ',
+    'shopPasteCode':
+        'በሱቅዎ ድረ-ገጽ Payments ውስጥ Create link code ይጫኑና ኮዱን እዚህ ይለጥፉ። የሚላከው የገቢ ገንዘብ መጠን ብቻ ነው፤ ሱቁ የሚያስቀምጠው ሰራተኞችዎ ከሚጠብቁት ክፍያ ጋር ሲዛመድ ብቻ ነው።',
+    'shopCode':
+        'የማገናኛ ኮድ',
+    'shopLinkInvalid':
+        'ኮዱ አልሰራም። በሱቁ ድረ-ገጽ አዲስ ኮድ ይፍጠሩ።',
+    'shopLinkDone':
+        'ተገናኝቷል። የሚዛመዱ ክፍያዎች አሁን በሱቁ ድረ-ገጽ ይታያሉ።',
+    'shopNeedsTracking':
+        'ተገናኝቷል። ክፍያዎች እንዲረጋገጡ የባንክ SMS ክትትልን ያብሩ።',
+    'shopUnlinkConfirm':
+        'በዚህ ስልክ የሱቅ ክፍያዎችን ማረጋገጥ ላቁም?',
   },
 };
 
