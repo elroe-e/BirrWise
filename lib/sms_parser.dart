@@ -101,6 +101,26 @@ class SmsParser {
     r'\b(?:promo|promotional|promotion)\b',
     caseSensitive: false,
   );
+  // Loyalty points, loan offers and failed transactions move no money. A
+  // reversal or refund does, so it is kept. Same list as AlertText.kt.
+  static final _noMoneyMoved = RegExp(
+    r'\b(?:loyalty|reward|bonus)\s+points?\b|\b[0-9]+\s+points?\b'
+    r'|\byou\s+have\s+scored\b'
+    r'|\b(?:eligible|qualif(?:y|ied)|pre-?approved)\b.{0,40}\bloans?\b'
+    r'|\bloan\s+limit\b|\bborrow\s+up\s+to\b'
+    r'|\b(?:failed|unsuccessful|declined|rejected)\b|\bnot\s+successful\b'
+    r'|\bcould\s+not\s+be\s+(?:completed|processed)\b'
+    r'|\binsufficient\s+(?:balance|funds)\b|አልተሳካም',
+    caseSensitive: false,
+  );
+  static final _moneyBack = RegExp(
+    r'\b(?:revers(?:ed|al)|refund(?:ed)?)\b',
+    caseSensitive: false,
+  );
+
+  /// True for alerts that look like money but move none.
+  static bool movesNoMoney(String body) =>
+      _noMoneyMoved.hasMatch(body) && !_moneyBack.hasMatch(body);
 
   static final _income = RegExp(
     r'\b(receiv(?:ed|e)|credit(?:ed)?|deposit(?:ed)?|cash[\s-]*in|top[\s-]*up)\b|ገቢ|ገብቷል|ተቀበሉ|ተቀብለዋል',
@@ -151,6 +171,7 @@ class SmsParser {
     final institution = institutionFor(sender);
     if (institution == null) return null;
     if (_codeDelivery.hasMatch(body)) return null;
+    if (movesNoMoney(body)) return null;
 
     final hasIncome = _income.hasMatch(body);
     final hasExpense = _expense.hasMatch(body);

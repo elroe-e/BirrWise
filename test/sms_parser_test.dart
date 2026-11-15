@@ -105,6 +105,34 @@ void main() {
       );
     });
 
+    test('ignores points, loan offers and failed transactions', () {
+      for (final body in [
+        'You have received 10 points worth ETB 5.00 from telebirr.',
+        'You have scored ETB 20.00 in the telebirr loyalty draw.',
+        'You are eligible for a loan of up to ETB 5,000.00. Dial *127#.',
+        'Your loan limit is ETB 3,000.00.',
+        'Your transfer of ETB 500.00 to Abebe failed. Balance ETB 900.00.',
+        'Transaction of ETB 200.00 was unsuccessful due to insufficient balance.',
+        'ETB 150.00 ክፍያ አልተሳካም።',
+      ]) {
+        expect(SmsParser.parse('127', body), isNull, reason: body);
+      }
+    });
+
+    test('keeps reversals, refunds and loan payouts', () {
+      expect(
+        SmsParser.parse('CBE',
+                'Your failed transfer of ETB 500.00 has been reversed. Your account has been credited.')
+            ?.amount,
+        50000,
+      );
+      expect(
+        SmsParser.parse('127', 'Your loan of ETB 2,000.00 has been credited to your account.')
+            ?.direction,
+        SmsDirection.income,
+      );
+    });
+
     test('unknown direction requires review', () {
       final result =
           SmsParser.parse('Awash', 'ETB 90.00 transaction ref AW12345');
