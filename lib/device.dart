@@ -55,6 +55,43 @@ Future<T> _picking<T>(Future<T> Function() action) async {
   }
 }
 
+/// Asks Android to allow notifications. Returns whether they are allowed.
+Future<bool> requestNotifications() async {
+  if (!Platform.isAndroid) return false;
+  try {
+    return await _channel.invokeMethod<bool>('requestNotifications') == true;
+  } on PlatformException {
+    return false;
+  } on MissingPluginException {
+    return false;
+  }
+}
+
+String? _sentAlertSettings;
+
+/// Tells Android the settings it needs while BirrWise is closed: which
+/// notifications are on, the language, and the banks that are not the
+/// person's. Sends only when they changed.
+Future<void> syncAlertSettings(AppState state) async {
+  if (!Platform.isAndroid || !state.ready) return;
+  final ignored = state.ignoredInstitutions.toList()..sort();
+  final settings = {
+    'transactions': state.transactionAlerts,
+    'language': state.language,
+    'ignored': ignored,
+  };
+  final key = settings.toString();
+  if (key == _sentAlertSettings) return;
+  _sentAlertSettings = key;
+  try {
+    await _channel.invokeMethod<void>('setAlertSettings', settings);
+  } on PlatformException {
+    _sentAlertSettings = null;
+  } on MissingPluginException {
+    // Not available off Android.
+  }
+}
+
 /// Links this phone to the shop's Payments page with the code shown there.
 Future<bool> linkShop(String code) async =>
     await _channel.invokeMethod<bool>('linkShop', {'code': code}) == true;

@@ -509,6 +509,22 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _SettingsGroup(
+          title: t(lang, 'notifications'),
+          children: [
+            _SettingsSwitch(
+              icon: Icons.notifications_active_outlined,
+              title: t(lang, 'txAlerts'),
+              subtitle: t(lang, 'txAlertsSub'),
+              value: state.transactionAlerts && state.bankSmsAutomationEnabled,
+              onChanged: state.bankSmsAutomationEnabled
+                  ? (value) => unawaited(
+                      _setNotification(context, state, 'txAlerts', value))
+                  : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _SettingsGroup(
           title: lang == 'am' ? 'የኤስኤምኤስ ግላዊነት' : 'Detection',
           child: ListTile(
             minTileHeight: 64,
@@ -581,6 +597,18 @@ class SettingsScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Turns a notification setting on only once Android allows notifications.
+Future<void> _setNotification(
+    BuildContext context, AppState state, String key, bool value) async {
+  if (value && !await requestNotifications()) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(t(state.language, 'notificationsDenied'))));
+    return;
+  }
+  await state.setPreference(key, value);
 }
 
 String _smsAutomationStatus(AppState state) {
@@ -926,7 +954,7 @@ class _SettingsSwitch extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) => SwitchListTile(

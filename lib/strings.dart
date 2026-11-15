@@ -108,6 +108,12 @@ const _strings = <String, Map<String, String>>{
     'bankSmsAutomation': 'Auto-track bank SMS',
     'bankSmsAutomationSub':
         'Read trusted bank alerts on this device to track clear transactions automatically.',
+    'notifications': 'Notifications',
+    'txAlerts': 'Notify me about transactions',
+    'txAlertsSub':
+        'A notification for each bank alert, even when BirrWise is closed. Needs Auto-track bank SMS.',
+    'notificationsDenied':
+        'Notifications are off for BirrWise. Allow them in Android settings.',
     'smsPermissionMissing':
         'SMS access is off. Allow inbox and incoming-message access to enable automation.',
     'smsSyncFailed':
@@ -465,6 +471,12 @@ const _strings = <String, Map<String, String>>{
     'expenseDirection': 'ወጪ',
     'bankSmsAutomation': 'የባንክ SMS በራስ-ሰር መከታተያ',
     'bankSmsAutomationSub': 'የተመረጡ የባንክ መልዕክቶችን በዚህ ስልክ ያንብቡ።',
+    'notifications': 'ማሳወቂያዎች',
+    'txAlerts': 'ስለ ግብይቶች አሳውቀኝ',
+    'txAlertsSub':
+        'BirrWise ዝግ ቢሆንም ለእያንዳንዱ የባንክ መልዕክት ማሳወቂያ። የባንክ SMS መከታተያ መብራት አለበት።',
+    'notificationsDenied':
+        'ለBirrWise ማሳወቂያዎች ጠፍተዋል። በAndroid ቅንብሮች ውስጥ ይፍቀዱ።',
     'smsPermissionMissing': 'የSMS ፈቃድ አልተሰጠም።',
     'smsSyncFailed': 'የባንክ መልዕክቶችን መፈተሽ አልተቻለም። እንደገና ይሞክሩ።',
     'smsAndroidOnly': 'የSMS በራስ-ሰር ክትትል በAndroid ላይ ብቻ ይገኛል።',

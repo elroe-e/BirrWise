@@ -9,6 +9,13 @@ internal object BankSmsInbox {
     const val ENABLED_KEY = "automation_enabled"
     const val QUEUE_KEY = "incoming_bank_sms"
 
+    // Written by setAlertSettings, so code that runs while BirrWise is
+    // closed follows the app's settings.
+    const val TX_ALERTS_KEY = "transaction_alerts"
+    const val OTP_ALERTS_KEY = "otp_alerts"
+    const val LANGUAGE_KEY = "language"
+    const val IGNORED_KEY = "ignored_institutions"
+
     // Keep in sync with SmsParser._trustedSenders on the Dart side.
     private val trustedSenders = mapOf(
         "127" to "telebirr",
@@ -42,6 +49,18 @@ internal object BankSmsInbox {
         "ahadu" to "ahadu",
         "ahadubank" to "ahadu",
     )
+
+    // The names the Dart side shows, used in notifications and to match the
+    // banks the person unticked.
+    private val displayNames = mapOf(
+        "telebirr" to "Telebirr", "cbe" to "CBE", "cbebirr" to "CBE Birr",
+        "awash" to "Awash", "awashbirr" to "Awash Birr", "boa" to "BOA",
+        "dashen" to "Dashen", "amole" to "Amole", "mpesa" to "M-PESA",
+        "coopay" to "Coopay", "coopbank" to "Coop Bank", "berhan" to "Berhan",
+        "bunna" to "Bunna", "hibret" to "Hibret", "ahadu" to "Ahadu",
+    )
+
+    fun displayName(institution: String) = displayNames[institution] ?: institution
 
     fun trustedInstitution(sender: String?): String? {
         val normalized =

@@ -39,6 +39,12 @@ class BankSmsReceiver : BroadcastReceiver() {
         check(preferences.edit().putString(BankSmsInbox.QUEUE_KEY, queue.toString()).commit()) {
             "Could not save an incoming bank alert."
         }
+        // The alert is saved; a notification problem must not lose it.
+        try {
+            TxNotifier.onAlert(context, institution, body, incoming.getString("id"), receivedAt)
+        } catch (error: RuntimeException) {
+            android.util.Log.w("BirrWise", "Could not post the transaction notification.", error)
+        }
         // Tell the shop now, not when BirrWise is next opened.
         if (ShopPayments.isLinked(context)) {
             val pending = goAsync()

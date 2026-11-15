@@ -11,6 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private var permissionResult: MethodChannel.Result? = null
+    private var notificationResult: MethodChannel.Result? = null
     private var documentResult: MethodChannel.Result? = null
     private var documentContent: String? = null
 
@@ -50,6 +51,19 @@ class MainActivity : FlutterActivity() {
                     "shopLinked" -> result.success(ShopPayments.isLinked(this))
                     "flushShop" -> {
                         Thread { ShopPayments.flush(applicationContext) }.start()
+                        result.success(null)
+                    }
+                    "requestNotifications" -> requestNotifications(result)
+                    "setAlertSettings" -> {
+                        getSharedPreferences(BankSmsInbox.PREFERENCES, MODE_PRIVATE).edit()
+                            .putBoolean(BankSmsInbox.TX_ALERTS_KEY, call.argument<Boolean>("transactions") == true)
+                            .putBoolean(BankSmsInbox.OTP_ALERTS_KEY, call.argument<Boolean>("otp") == true)
+                            .putString(BankSmsInbox.LANGUAGE_KEY, call.argument<String>("language") ?: "en")
+                            .putStringSet(
+                                BankSmsInbox.IGNORED_KEY,
+                                call.argument<List<String>>("ignored").orEmpty().toSet(),
+                            )
+                            .apply()
                         result.success(null)
                     }
                     "setSmsAutomationEnabled" -> {
@@ -101,6 +115,23 @@ class MainActivity : FlutterActivity() {
         )
     }
 
+    /** Asks to show notifications (Android 13+). Returns whether they are allowed. */
+    private fun requestNotifications(result: MethodChannel.Result) {
+        val manager = getSystemService(android.app.NotificationManager::class.java)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            hasPermission(Manifest.permission.POST_NOTIFICATIONS)
+        ) {
+            result.success(manager.areNotificationsEnabled())
+            return
+        }
+        if (notificationResult != null) {
+            result.error("permission_in_progress", "A notification permission request is already active.", null)
+            return
+        }
+        notificationResult = result
+        requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST)
+    }
+
     @Deprecated("Deprecated in the Android SDK")
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -108,6 +139,13 @@ class MainActivity : FlutterActivity() {
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
+            notificationResult?.success(
+                grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED,
+            )
+            notificationResult = null
+            return
+        }
         if (requestCode != SMS_PERMISSION_REQUEST) return
         permissionResult?.success(permissionStatus())
         permissionResult = null
@@ -227,5 +265,6 @@ class MainActivity : FlutterActivity() {
         private const val SMS_PERMISSION_REQUEST = 7001
         private const val SAVE_DOCUMENT_REQUEST = 7002
         private const val OPEN_DOCUMENT_REQUEST = 7003
+        private const val NOTIFICATION_PERMISSION_REQUEST = 7004
     }
 }

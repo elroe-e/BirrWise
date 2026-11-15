@@ -51,6 +51,9 @@ class AppState extends ChangeNotifier {
   bool darkMode = false;
   bool useEthiopianCalendar = false;
   bool bankSmsAutomationEnabled = false;
+
+  /// A notification for each bank alert, posted by Android.
+  bool transactionAlerts = false;
   bool smsHistoryScanned = false;
   bool smsAutomationPrompted = false;
 
@@ -106,6 +109,7 @@ class AppState extends ChangeNotifier {
     useEthiopianCalendar = prefs.getBool('ethiopianCalendar') ?? false;
     bankSmsAutomationEnabled =
         prefs.getBool('bankSmsAutomationEnabled') ?? false;
+    transactionAlerts = prefs.getBool('transactionAlerts') ?? false;
     smsHistoryScanned = prefs.getBool('smsHistoryScanned') ?? false;
     smsAutomationPrompted = prefs.getBool('smsAutomationPrompted') ?? false;
     final enabledAt = prefs.getInt('smsAutomationEnabledAt');
@@ -231,6 +235,7 @@ class AppState extends ChangeNotifier {
       prefs.setBool('darkMode', darkMode),
       prefs.setBool('ethiopianCalendar', useEthiopianCalendar),
       prefs.setBool('bankSmsAutomationEnabled', bankSmsAutomationEnabled),
+      prefs.setBool('transactionAlerts', transactionAlerts),
       prefs.setBool('smsHistoryScanned', smsHistoryScanned),
       prefs.setBool('smsAutomationPrompted', smsAutomationPrompted),
       if (smsAutomationEnabledAt case final enabledAt?)
@@ -1076,6 +1081,9 @@ class AppState extends ChangeNotifier {
         break;
       case 'merchant':
         merchantMode = value;
+        break;
+      case 'txAlerts':
+        transactionAlerts = value;
         break;
     }
     await _changed();

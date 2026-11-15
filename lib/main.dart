@@ -42,6 +42,7 @@ class _BirrWiseAppState extends State<BirrWiseApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    state.addListener(() => unawaited(syncAlertSettings(state)));
     loading = _load();
   }
 
