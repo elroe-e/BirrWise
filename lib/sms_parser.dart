@@ -170,6 +170,13 @@ class SmsParser {
   static ParsedSms? parse(String sender, String body) {
     final institution = institutionFor(sender);
     if (institution == null) return null;
+    return parseText(body, institution: institution, sender: sender);
+  }
+
+  /// Reads a transaction from any text, such as a scanned receipt, without
+  /// checking who sent it.
+  static ParsedSms? parseText(String body,
+      {String institution = '', String sender = ''}) {
     if (_codeDelivery.hasMatch(body)) return null;
     if (movesNoMoney(body)) return null;
 
@@ -218,7 +225,7 @@ class SmsParser {
             ? SmsDirection.income
             : SmsDirection.expense;
 
-    final reference = _findReference(body);
+    final reference = findReference(body);
     final party = _findParty(body);
     final confidence = direction == SmsDirection.unknown
         ? SmsConfidence.low
@@ -239,7 +246,8 @@ class SmsParser {
     );
   }
 
-  static String? _findReference(String body) {
+  /// The transaction reference in [body], or null.
+  static String? findReference(String body) {
     for (final match in _reference.allMatches(body)) {
       final value = match.group(1)!;
       if (value.contains(RegExp('[0-9]'))) return value.toUpperCase();

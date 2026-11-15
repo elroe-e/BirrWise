@@ -53,6 +53,12 @@ Future<bool> savePdf({
             'savePdf', {'name': name, 'blocks': blocks}) ==
         true);
 
+/// Takes a photo of a receipt, or picks one, and returns its text. Null if
+/// the person cancelled.
+Future<String?> scanReceipt({required bool camera}) => _picking(() =>
+    _channel.invokeMethod<String>(
+        'scanReceipt', {'source': camera ? 'camera' : 'gallery'}));
+
 /// Asks for a file and returns its text, or null if the person cancelled.
 Future<String?> openDocument() =>
     _picking(() => _channel.invokeMethod<String>('openDocument'));

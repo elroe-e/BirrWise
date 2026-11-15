@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_state.dart';
 import 'device.dart';
 import 'domain.dart';
 import 'ethiopian_date.dart';
+import 'receipt.dart';
 import 'sms_parser.dart';
 import 'strings.dart';
 import 'widgets.dart';
@@ -161,12 +164,53 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
   bool business = false;
   String? error;
 
+  /// From a scanned receipt: its reference, so the bank's own alert for the
+  /// same payment is not added again, and what to tell the person.
+  String? reference;
+  String? receiptNotice;
+
   @override
   void initState() {
     super.initState();
     final active = widget.state.accounts.where((a) => !a.archived).toList();
     accountId = active.first.id;
     toAccountId = active.length > 1 ? active[1].id : accountId;
+  }
+
+  Future<void> _scan(bool camera) async {
+    final lang = widget.state.language;
+    String? text;
+    try {
+      text = await scanReceipt(camera: camera);
+    } on PlatformException catch (e) {
+      setState(() => receiptNotice = e.code == 'no_camera'
+          ? e.message
+          : t(lang, 'receiptFailed'));
+      return;
+    }
+    if (text == null || !mounted) return;
+    final fields = readReceipt(text);
+    final amount = fields.amount;
+    setState(() {
+      if (amount == null) {
+        receiptNotice = t(lang, 'receiptNothing');
+        return;
+      }
+      amountController.text =
+          '${amount ~/ 100}.${(amount % 100).toString().padLeft(2, '0')}';
+      if (type != EntryType.transferOut) {
+        if (fields.direction == SmsDirection.income) type = EntryType.income;
+        if (fields.direction == SmsDirection.expense) type = EntryType.expense;
+      }
+      if (fields.party case final party?) noteController.text = party;
+      if (fields.date case final read?) date = read;
+      reference = fields.reference;
+      receiptNotice = reference != null &&
+              widget.state.entries.any((e) => e.smsReference == reference)
+          ? t(lang, 'receiptRecorded')
+          : t(lang, 'receiptFilled');
+      error = null;
+    });
   }
 
   @override
@@ -190,6 +234,41 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(t(lang, 'add'), style: theme.textTheme.headlineSmall),
+            if (Platform.isAndroid) ...[
+              const SizedBox(height: 12),
+              Text(t(lang, 'scanReceipt'), style: theme.textTheme.labelLarge),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _scan(true),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: Text(t(lang, 'receiptCamera')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _scan(false),
+                    icon: const Icon(Icons.image_outlined),
+                    label: Text(t(lang, 'receiptGallery')),
+                  ),
+                ],
+              ),
+              if (receiptNotice case final notice?)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          size: 18, color: theme.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child:
+                              Text(notice, style: theme.textTheme.bodySmall)),
+                    ],
+                  ),
+                ),
+            ],
             const SizedBox(height: 20),
             SegmentedButton<EntryType>(
               segments: [
@@ -345,6 +424,12 @@ class _AddEntrySheetState extends State<_AddEntrySheet> {
                               party: noteController.text,
                               date: date,
                               business: business,
+                              institution: reference == null
+                                  ? null
+                                  : state.accounts
+                                      .firstWhere((a) => a.id == accountId)
+                                      .institution,
+                              smsReference: reference,
                             );
                           }
                           final cash = state.accounts

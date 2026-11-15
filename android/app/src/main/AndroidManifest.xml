@@ -46,6 +46,20 @@
         <receiver
             android:name=".OtpCopyReceiver"
             android:exported="false" />
+        <!-- Hands the camera app a private file for the receipt photo. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.receipts"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/receipt_paths" />
+        </provider>
+        <!-- Asks Play services to fetch the text reader when BirrWise is installed. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

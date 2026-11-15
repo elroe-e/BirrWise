@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -15,6 +16,8 @@ class MainActivity : FlutterActivity() {
     private var documentResult: MethodChannel.Result? = null
     private var documentContent: String? = null
     private var documentPdf: List<Map<String, Any?>>? = null
+    private var receiptResult: MethodChannel.Result? = null
+    private var receiptPhoto: java.io.File? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -42,6 +45,7 @@ class MainActivity : FlutterActivity() {
                         result,
                     )
                     "openDocument" -> openDocument(result)
+                    "scanReceipt" -> scanReceipt(call.argument<String>("source") == "camera", result)
                     "savePdf" -> savePdf(
                         call.argument<String>("name") ?: "BirrWise.pdf",
                         call.argument<List<Map<String, Any?>>>("blocks").orEmpty(),
@@ -184,6 +188,32 @@ class MainActivity : FlutterActivity() {
         startActivityForResult(intent, SAVE_DOCUMENT_REQUEST)
     }
 
+    /** Takes or picks a receipt image and returns its text, or null if cancelled. */
+    private fun scanReceipt(camera: Boolean, result: MethodChannel.Result) {
+        if (receiptResult != null) {
+            result.error("receipt_in_progress", "A receipt scan is already open.", null)
+            return
+        }
+        val intent = if (camera) {
+            val (file, uri) = ReceiptScanner.photoTarget(this)
+            receiptPhoto = file
+            Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+                .putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri)
+                .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Intent(android.provider.MediaStore.ACTION_PICK_IMAGES)
+        } else {
+            Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("image/*")
+        }
+        try {
+            startActivityForResult(intent, RECEIPT_REQUEST)
+            receiptResult = result
+        } catch (error: android.content.ActivityNotFoundException) {
+            receiptPhoto = null
+            result.error("no_camera", "No app on this phone can take or pick a photo.", null)
+        }
+    }
+
     /** Lets the person pick a file and returns its text, or null if cancelled. */
     private fun openDocument(result: MethodChannel.Result) {
         if (!startDocumentRequest(result)) return
@@ -205,6 +235,28 @@ class MainActivity : FlutterActivity() {
     @Deprecated("Deprecated in the Android SDK")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RECEIPT_REQUEST) {
+            val result = receiptResult ?: return
+            val photo = receiptPhoto
+            receiptResult = null
+            receiptPhoto = null
+            val uri = when {
+                resultCode != Activity.RESULT_OK -> null
+                photo != null -> if (photo.length() > 0) Uri.fromFile(photo) else null
+                else -> data?.data
+            }
+            if (uri == null) {
+                photo?.delete()
+                result.success(null)
+                return
+            }
+            ReceiptScanner.read(this, uri) { text, error ->
+                photo?.delete()
+                if (error != null) result.error("receipt_failed", "BirrWise could not read that image.", error)
+                else result.success(text)
+            }
+            return
+        }
         if (requestCode != SAVE_DOCUMENT_REQUEST && requestCode != OPEN_DOCUMENT_REQUEST) return
         val result = documentResult ?: return
         val content = documentContent
@@ -285,5 +337,6 @@ class MainActivity : FlutterActivity() {
         private const val SAVE_DOCUMENT_REQUEST = 7002
         private const val OPEN_DOCUMENT_REQUEST = 7003
         private const val NOTIFICATION_PERMISSION_REQUEST = 7004
+        private const val RECEIPT_REQUEST = 7005
     }
 }
