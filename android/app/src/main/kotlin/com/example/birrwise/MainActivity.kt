@@ -14,6 +14,7 @@ class MainActivity : FlutterActivity() {
     private var notificationResult: MethodChannel.Result? = null
     private var documentResult: MethodChannel.Result? = null
     private var documentContent: String? = null
+    private var documentPdf: List<Map<String, Any?>>? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -41,6 +42,11 @@ class MainActivity : FlutterActivity() {
                         result,
                     )
                     "openDocument" -> openDocument(result)
+                    "savePdf" -> savePdf(
+                        call.argument<String>("name") ?: "BirrWise.pdf",
+                        call.argument<List<Map<String, Any?>>>("blocks").orEmpty(),
+                        result,
+                    )
                     "linkShop" -> result.success(
                         ShopPayments.link(this, call.argument<String>("code").orEmpty()),
                     )
@@ -167,6 +173,17 @@ class MainActivity : FlutterActivity() {
         startActivityForResult(intent, SAVE_DOCUMENT_REQUEST)
     }
 
+    /** Lets the person pick where to save, then draws the report there as a PDF. */
+    private fun savePdf(name: String, blocks: List<Map<String, Any?>>, result: MethodChannel.Result) {
+        if (!startDocumentRequest(result)) return
+        documentPdf = blocks
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .setType("application/pdf")
+            .putExtra(Intent.EXTRA_TITLE, name)
+        startActivityForResult(intent, SAVE_DOCUMENT_REQUEST)
+    }
+
     /** Lets the person pick a file and returns its text, or null if cancelled. */
     private fun openDocument(result: MethodChannel.Result) {
         if (!startDocumentRequest(result)) return
@@ -191,8 +208,10 @@ class MainActivity : FlutterActivity() {
         if (requestCode != SAVE_DOCUMENT_REQUEST && requestCode != OPEN_DOCUMENT_REQUEST) return
         val result = documentResult ?: return
         val content = documentContent
+        val pdf = documentPdf
         documentResult = null
         documentContent = null
+        documentPdf = null
         val uri = data?.data
         if (resultCode != Activity.RESULT_OK || uri == null) {
             result.success(null)
@@ -202,7 +221,7 @@ class MainActivity : FlutterActivity() {
             if (requestCode == SAVE_DOCUMENT_REQUEST) {
                 contentResolver.openOutputStream(uri, "wt").use { stream ->
                     checkNotNull(stream) { "Could not open the file." }
-                    stream.write(content.orEmpty().toByteArray())
+                    if (pdf != null) PdfReport.write(pdf, stream) else stream.write(content.orEmpty().toByteArray())
                 }
                 result.success(true)
             } else {

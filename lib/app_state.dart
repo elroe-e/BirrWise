@@ -326,10 +326,10 @@ class AppState extends ChangeNotifier {
         .fold<int>(0, (sum, e) => sum + e.amount);
   }
 
-  Map<String, int> monthExpensesByCategory() {
+  Map<String, int> monthExpensesByCategory([int monthsAgo = 0]) {
     final totals = <String, int>{};
     for (final entry in entries.where(
-        (e) => e.type == EntryType.expense && isInCurrentMonth(e.date))) {
+        (e) => e.type == EntryType.expense && isInMonth(e.date, monthsAgo))) {
       totals.update(entry.category, (value) => value + entry.amount,
           ifAbsent: () => entry.amount);
     }

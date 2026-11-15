@@ -258,6 +258,16 @@ const _strings = <String, Map<String, String>>{
         'Enter a name and an amount.',
     'csvSub':
         'Save the ledger as a spreadsheet',
+    'pdfReport': 'PDF report',
+    'pdfReportSub': 'A monthly report to print or share',
+    'lastMonth': 'Last month',
+    'reportTitle': 'BirrWise report',
+    'reportCreated': 'Created {date}',
+    'summary': 'Summary',
+    'byCategory': 'Spending by category',
+    'date': 'Date',
+    'balancesOn': 'Balances on {date}',
+    'noTransactionsMonth': 'No transactions in this month.',
     'backup':
         'Backup',
     'backupSub':
@@ -621,6 +631,16 @@ const _strings = <String, Map<String, String>>{
         'ስምና የገንዘብ መጠን ያስገቡ።',
     'csvSub':
         'የግብይት ዝርዝሩን እንደ ፋይል ያስቀምጡ',
+    'pdfReport': 'PDF ሪፖርት',
+    'pdfReportSub': 'ለማተም ወይም ለማጋራት ወርሃዊ ሪፖርት',
+    'lastMonth': 'ያለፈው ወር',
+    'reportTitle': 'የብርዋይዝ ሪፖርት',
+    'reportCreated': 'የተዘጋጀው {date}',
+    'summary': 'ማጠቃለያ',
+    'byCategory': 'ወጪ በምድብ',
+    'date': 'ቀን',
+    'balancesOn': 'ቀሪ ሂሳብ በ{date}',
+    'noTransactionsMonth': 'በዚህ ወር ምንም ግብይት የለም።',
     'backup':
         'የመረጃ ቅጂ',
     'backupSub':

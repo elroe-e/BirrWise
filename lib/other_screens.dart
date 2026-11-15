@@ -6,8 +6,10 @@ import 'accounts_screen.dart';
 import 'app_state.dart';
 import 'device.dart';
 import 'dialogs.dart';
+import 'ethiopian_date.dart';
 import 'domain.dart';
 import 'lock_screen.dart';
+import 'pdf_report.dart';
 import 'sms_automation.dart';
 import 'sms_parser.dart';
 import 'sms_inbox_screen.dart';
@@ -52,6 +54,12 @@ class HubScreen extends StatelessWidget {
         lang == 'am' ? 'ውጭ ላክ' : 'Export CSV',
         t(lang, 'csvSub'),
         onTap: () => _saveCsv(context),
+      ),
+      _HubItem(
+        Icons.picture_as_pdf_outlined,
+        t(lang, 'pdfReport'),
+        t(lang, 'pdfReportSub'),
+        onTap: () => _savePdf(context),
       ),
       _HubItem(
         Icons.backup_outlined,
@@ -190,9 +198,47 @@ class HubScreen extends StatelessWidget {
     }
     await _saveFile(
       context,
-      name: 'BirrWise_Transactions_${_today()}.csv',
-      mimeType: 'text/csv',
-      content: csv.toString(),
+      () => saveDocument(
+        name: 'BirrWise_Transactions_${_today()}.csv',
+        mimeType: 'text/csv',
+        content: csv.toString(),
+      ),
+    );
+  }
+
+  Future<void> _savePdf(BuildContext context) async {
+    final lang = state.language;
+    final monthsAgo = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (ago, key) in [(0, 'thisMonth'), (1, 'lastMonth')])
+              ListTile(
+                leading: const Icon(Icons.calendar_month_outlined),
+                title: Text(t(lang, key)),
+                subtitle: Text(monthLabel(state.monthBounds(ago).start,
+                    ethiopian: state.useEthiopianCalendar, language: lang)),
+                onTap: () => Navigator.pop(context, ago),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (monthsAgo == null || !context.mounted) return;
+    final start = state.monthBounds(monthsAgo).start;
+    final month =
+        '${start.year}-${start.month.toString().padLeft(2, '0')}';
+    await _saveFile(
+      context,
+      () => savePdf(
+        name: 'BirrWise_Report_$month.pdf',
+        blocks: reportBlocks(state, monthsAgo),
+      ),
     );
   }
 
@@ -231,9 +277,11 @@ class HubScreen extends StatelessWidget {
     if (choice == 'save') {
       await _saveFile(
         context,
-        name: 'BirrWise_Backup_${_today()}.json',
-        mimeType: 'application/json',
-        content: state.exportBackup(),
+        () => saveDocument(
+          name: 'BirrWise_Backup_${_today()}.json',
+          mimeType: 'application/json',
+          content: state.exportBackup(),
+        ),
       );
     } else if (choice == 'restore') {
       await _restore(context);
@@ -275,19 +323,13 @@ class HubScreen extends StatelessWidget {
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// Runs [save] and says whether the file was saved.
   Future<void> _saveFile(
-    BuildContext context, {
-    required String name,
-    required String mimeType,
-    required String content,
-  }) async {
+      BuildContext context, Future<bool> Function() save) async {
     final messenger = ScaffoldMessenger.of(context);
     String message;
     try {
-      if (!await saveDocument(
-          name: name, mimeType: mimeType, content: content)) {
-        return;
-      }
+      if (!await save()) return;
       message = t(state.language, 'fileSaved');
     } on PlatformException {
       message = t(state.language, 'fileFailed');

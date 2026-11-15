@@ -42,6 +42,17 @@ Future<bool> saveDocument({
         }) ==
         true);
 
+/// Asks where to save a PDF of [blocks] (see pdf_report.dart). Returns false
+/// if the person cancelled.
+Future<bool> savePdf({
+  required String name,
+  required List<Map<String, Object>> blocks,
+}) =>
+    _picking(() async =>
+        await _channel.invokeMethod<bool>(
+            'savePdf', {'name': name, 'blocks': blocks}) ==
+        true);
+
 /// Asks for a file and returns its text, or null if the person cancelled.
 Future<String?> openDocument() =>
     _picking(() => _channel.invokeMethod<String>('openDocument'));
