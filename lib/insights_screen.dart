@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'app_state.dart';
+import 'calendar_view.dart';
 import 'domain.dart';
 import 'ethiopian_date.dart';
 import 'health_score.dart';
@@ -121,6 +122,13 @@ class InsightsScreen extends StatelessWidget {
         SectionHeading(t(lang, 'cashFlowTrend')),
         const SizedBox(height: 12),
         BirrCard(child: _CashFlowChart(state: state)),
+        const SizedBox(height: 20),
+        SectionHeading(t(lang, 'calendar')),
+        const SizedBox(height: 12),
+        BirrCard(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+          child: CalendarView(state: state),
+        ),
         const SizedBox(height: 20),
         SectionHeading(t(lang, 'scoreHowMade')),
         const SizedBox(height: 8),

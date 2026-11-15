@@ -328,6 +328,10 @@ const _strings = <String, Map<String, String>>{
         'Offline and private',
     'privacyFirstBody':
         'Your bank and wallet messages never leave this phone. Everything is worked out on your device.',
+    'calendar': 'Calendar',
+    'previousMonth': 'Previous month',
+    'nextMonth': 'Next month',
+    'noEntriesDay': 'Nothing on this day.',
     'cashFlowTrend':
         'Income and spending, last 4 months',
     'editAmount':
@@ -687,6 +691,10 @@ const _strings = <String, Map<String, String>>{
         'ሙሉ በሙሉ በስልክዎ ላይ ብቻ የሚቀመጥ',
     'privacyFirstBody':
         'የባንክ እና የቴሌብር መልዕክቶችዎ ከስልክዎ ውጪ ወደ የትኛውም ሰርቨር አይላኩም። ሁሉም ስሌት በስልክዎ ውስጥ ብቻ ይከናወናል።',
+    'calendar': 'የቀን መቁጠሪያ',
+    'previousMonth': 'ያለፈው ወር',
+    'nextMonth': 'የሚቀጥለው ወር',
+    'noEntriesDay': 'በዚህ ቀን ምንም የለም።',
     'cashFlowTrend':
         'የገንዘብ ፍሰት (ያለፉት 4 ወራት)',
     'editAmount':
