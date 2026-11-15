@@ -634,11 +634,11 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => showAboutDialog(
             context: context,
             applicationName: 'BirrWise',
-            applicationVersion: '1.3.0',
+            applicationVersion: '1.4.0',
             applicationLegalese: 'Private, offline-first finance tracking.',
           ),
           child: Text(
-            'BirrWise · 1.3.0',
+            'BirrWise · 1.4.0',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

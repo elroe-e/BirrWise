@@ -2,9 +2,9 @@
 
 BirrWise is an offline-first Flutter personal-finance app for Ethiopian Birr.
 The app keeps accounts, transactions, savings goals, recurring bills, settings,
-and SMS reviews in private local app storage. It does not request internet
-access or connect to a service. Optional Android bank-SMS tracking is off until
-you enable it and grant Android's SMS permissions.
+and SMS reviews in private local app storage. It connects to nothing unless you
+link a shop (see below). Optional Android bank-SMS tracking is off until you
+enable it and grant Android's SMS permissions.
 
 ## Run
 
@@ -41,6 +41,29 @@ sends its amounts, bank and time to that shop's Supabase function
 when the amount matches and stores nothing otherwise. Spending alerts, message
 text and balances other than as candidate amounts are never sent. Failed sends
 are retried for up to two days.
+
+Alerts for loyalty points, loan offers and failed transactions are ignored;
+reversals and refunds are kept.
+
+## Notifications, codes, reports and receipts
+
+- **Transaction notifications** (Settings → Notifications, off by default):
+  the Android receiver posts "Received ETB 500.00 · CBE" for each alert, even
+  with BirrWise closed. Unticked banks never notify; on a locked screen only
+  "New bank alert" shows when Android hides sensitive content.
+- **Verification codes** (off by default): the receiver reads every incoming
+  SMS only to find a 4–8 digit code, then shows it with a Copy button. The code
+  is never stored, logged or sent, is copied as sensitive, and the
+  notification expires after five minutes (Android 8+).
+- **Calendar**: Insights shows each day's money in and out, in the Gregorian or
+  Ethiopian calendar.
+- **PDF report**: Hub → PDF report saves this or last month's totals,
+  categories, balances and transactions, drawn by Android's PDF writer.
+- **Receipt scan**: Add transaction → Camera or Photo or screenshot. Google
+  Play services' on-device text reader fills in amount, payee, date and
+  reference for you to check. Amharic text is not read. The photo is deleted
+  after reading, and the saved reference stops the bank's alert for the same
+  payment from being added twice.
 
 An alert is added without confirmation when its amount and direction are clear
 and exactly one non-archived account matches its institution; a reference is

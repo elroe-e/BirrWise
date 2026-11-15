@@ -1,6 +1,6 @@
 # BirrWise 1.4.0 plan: features from Gebeta SMS
 
-Status: waiting for approval. Nothing below is built yet, except step 0.
+Status: built in 1.4.0 (steps 0–7). Not yet pushed or released.
 
 ## What stays out
 
