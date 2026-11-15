@@ -75,10 +75,10 @@ List<Map<String, Object>> reportBlocks(AppState state, int monthsAgo,
       for (final e in entries)
         row([
           date(e.date),
-          [
-            if (e.party.isNotEmpty) e.party,
-            accountName(e.accountId),
-          ].where((part) => part.isNotEmpty).join(' · '),
+          // Bank alerts name the bank as payee, often the account's name too.
+          {e.party, accountName(e.accountId)}
+              .where((part) => part.isNotEmpty)
+              .join(' · '),
           switch (e.type) {
             EntryType.adjustment => t(lang, 'adjustment'),
             EntryType.transferIn || EntryType.transferOut => t(lang, 'transfer'),

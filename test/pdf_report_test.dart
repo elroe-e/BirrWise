@@ -59,6 +59,19 @@ void main() {
         reason: 'last month stays out');
   });
 
+  test('does not repeat a payee that is also the account name', () async {
+    await state.addEntry(
+        accountId: state.accounts.single.id,
+        type: EntryType.expense,
+        amount: 1000,
+        category: 'other',
+        party: 'Wallet',
+        date: DateTime(2026, 10, 4, 9));
+    final table = rows(reportBlocks(state, 0));
+    expect(table.where((r) => r.contains('Wallet · Wallet')), isEmpty);
+    expect(table.where((r) => r.startsWith('4/10/2026 | Wallet |')), hasLength(1));
+  });
+
   test('last month: balances as the month ended', () {
     final table = rows(reportBlocks(state, 1));
     expect(table, contains(['Expenses', 'ETB 500.00'].join(' | ')));
