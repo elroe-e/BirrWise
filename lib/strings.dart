@@ -114,6 +114,9 @@ const _strings = <String, Map<String, String>>{
         'A notification for each bank alert, even when BirrWise is closed. Needs Auto-track bank SMS.',
     'notificationsDenied':
         'Notifications are off for BirrWise. Allow them in Android settings.',
+    'otpAlerts': 'Show verification codes',
+    'otpAlertsSub':
+        'Shows the code from any SMS with a Copy button. BirrWise reads those messages only to find the code and keeps nothing.',
     'smsPermissionMissing':
         'SMS access is off. Allow inbox and incoming-message access to enable automation.',
     'smsSyncFailed':
@@ -477,6 +480,9 @@ const _strings = <String, Map<String, String>>{
         'BirrWise ዝግ ቢሆንም ለእያንዳንዱ የባንክ መልዕክት ማሳወቂያ። የባንክ SMS መከታተያ መብራት አለበት።',
     'notificationsDenied':
         'ለBirrWise ማሳወቂያዎች ጠፍተዋል። በAndroid ቅንብሮች ውስጥ ይፍቀዱ።',
+    'otpAlerts': 'የማረጋገጫ ኮዶችን አሳይ',
+    'otpAlertsSub':
+        'ከማንኛውም SMS ኮዱን ከ«ቅዳ» ቁልፍ ጋር ያሳያል። BirrWise እነዚህን መልዕክቶች ኮዱን ለማግኘት ብቻ ያነባል፤ ምንም አያስቀምጥም።',
     'smsPermissionMissing': 'የSMS ፈቃድ አልተሰጠም።',
     'smsSyncFailed': 'የባንክ መልዕክቶችን መፈተሽ አልተቻለም። እንደገና ይሞክሩ።',
     'smsAndroidOnly': 'የSMS በራስ-ሰር ክትትል በAndroid ላይ ብቻ ይገኛል።',

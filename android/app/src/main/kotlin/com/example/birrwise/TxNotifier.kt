@@ -30,12 +30,12 @@ internal object TxNotifier {
             )
         }
         if (!manager.areNotificationsEnabled()) return
-        val hidden = builder(context)
+        val hidden = builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_birrwise)
             .setContentTitle("BirrWise")
             .setContentText(if (amharic) "አዲስ የባንክ መልዕክት" else "New bank alert")
             .build()
-        val notification = builder(context)
+        val notification = builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_birrwise)
             .setContentTitle(title)
             .setContentText(text)
@@ -60,9 +60,9 @@ internal object TxNotifier {
         }
     }
 
-    fun builder(context: Context): Notification.Builder =
+    fun builder(context: Context, channelId: String): Notification.Builder =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(context, CHANNEL_ID)
+            Notification.Builder(context, channelId)
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(context)

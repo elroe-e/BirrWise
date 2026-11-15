@@ -67,6 +67,20 @@ Future<bool> requestNotifications() async {
   }
 }
 
+/// Asks for SMS access. Returns whether incoming messages can be read.
+Future<bool> requestSmsReceive() async {
+  if (!Platform.isAndroid) return false;
+  try {
+    final status =
+        await _channel.invokeMapMethod<String, bool>('requestSmsPermissions');
+    return status?['receive'] == true;
+  } on PlatformException {
+    return false;
+  } on MissingPluginException {
+    return false;
+  }
+}
+
 String? _sentAlertSettings;
 
 /// Tells Android the settings it needs while BirrWise is closed: which
@@ -77,6 +91,7 @@ Future<void> syncAlertSettings(AppState state) async {
   final ignored = state.ignoredInstitutions.toList()..sort();
   final settings = {
     'transactions': state.transactionAlerts,
+    'otp': state.otpAlerts,
     'language': state.language,
     'ignored': ignored,
   };

@@ -54,6 +54,9 @@ class AppState extends ChangeNotifier {
 
   /// A notification for each bank alert, posted by Android.
   bool transactionAlerts = false;
+
+  /// Verification codes from any SMS, shown by Android with a Copy button.
+  bool otpAlerts = false;
   bool smsHistoryScanned = false;
   bool smsAutomationPrompted = false;
 
@@ -110,6 +113,7 @@ class AppState extends ChangeNotifier {
     bankSmsAutomationEnabled =
         prefs.getBool('bankSmsAutomationEnabled') ?? false;
     transactionAlerts = prefs.getBool('transactionAlerts') ?? false;
+    otpAlerts = prefs.getBool('otpAlerts') ?? false;
     smsHistoryScanned = prefs.getBool('smsHistoryScanned') ?? false;
     smsAutomationPrompted = prefs.getBool('smsAutomationPrompted') ?? false;
     final enabledAt = prefs.getInt('smsAutomationEnabledAt');
@@ -236,6 +240,7 @@ class AppState extends ChangeNotifier {
       prefs.setBool('ethiopianCalendar', useEthiopianCalendar),
       prefs.setBool('bankSmsAutomationEnabled', bankSmsAutomationEnabled),
       prefs.setBool('transactionAlerts', transactionAlerts),
+      prefs.setBool('otpAlerts', otpAlerts),
       prefs.setBool('smsHistoryScanned', smsHistoryScanned),
       prefs.setBool('smsAutomationPrompted', smsAutomationPrompted),
       if (smsAutomationEnabledAt case final enabledAt?)
@@ -1084,6 +1089,9 @@ class AppState extends ChangeNotifier {
         break;
       case 'txAlerts':
         transactionAlerts = value;
+        break;
+      case 'otpAlerts':
+        otpAlerts = value;
         break;
     }
     await _changed();

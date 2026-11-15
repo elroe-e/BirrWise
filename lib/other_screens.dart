@@ -521,6 +521,15 @@ class SettingsScreen extends StatelessWidget {
                       _setNotification(context, state, 'txAlerts', value))
                   : null,
             ),
+            _SettingsSwitch(
+              icon: Icons.password_outlined,
+              title: t(lang, 'otpAlerts'),
+              subtitle: t(lang, 'otpAlertsSub'),
+              value: state.otpAlerts,
+              onChanged: (value) => unawaited(_setNotification(
+                  context, state, 'otpAlerts', value,
+                  needsSms: true)),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -601,7 +610,14 @@ class SettingsScreen extends StatelessWidget {
 
 /// Turns a notification setting on only once Android allows notifications.
 Future<void> _setNotification(
-    BuildContext context, AppState state, String key, bool value) async {
+    BuildContext context, AppState state, String key, bool value,
+    {bool needsSms = false}) async {
+  if (value && needsSms && !await requestSmsReceive()) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(t(state.language, 'smsPermissionMissing'))));
+    return;
+  }
   if (value && !await requestNotifications()) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(

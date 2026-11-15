@@ -13,14 +13,24 @@ class BankSmsReceiver : BroadcastReceiver() {
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
         val preferences =
             context.getSharedPreferences(BankSmsInbox.PREFERENCES, Context.MODE_PRIVATE)
-        if (!preferences.getBoolean(BankSmsInbox.ENABLED_KEY, false)) return
+        val bankAlerts = preferences.getBoolean(BankSmsInbox.ENABLED_KEY, false)
+        val codes = preferences.getBoolean(BankSmsInbox.OTP_ALERTS_KEY, false)
+        if (!bankAlerts && !codes) return
 
         val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         if (messages.isEmpty()) return
         val sender = messages.firstOrNull()?.originatingAddress ?: return
-        val institution = BankSmsInbox.trustedInstitution(sender) ?: return
         val body = messages.joinToString(separator = "") { it.messageBody.orEmpty() }
         if (body.isBlank()) return
+        if (codes) {
+            try {
+                OtpNotifier.onMessage(context, sender, body)
+            } catch (error: RuntimeException) {
+                android.util.Log.w("BirrWise", "Could not post the verification code.", error)
+            }
+        }
+        if (!bankAlerts) return
+        val institution = BankSmsInbox.trustedInstitution(sender) ?: return
         // Use the device's receive time, like the SMS inbox does. The
         // service-centre timestamp can differ by minutes (or a time zone),
         // which made the same alert look new when the inbox was rescanned.
