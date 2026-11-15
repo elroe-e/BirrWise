@@ -41,8 +41,13 @@ void main() {
       for (final sender in ['Awash', 'awashbank', 'awashbanksc']) {
         expect(SmsParser.parse(sender, 'You received ETB 30.00.'), isNotNull);
       }
-      for (final sender in ['BOA', 'Abyssinia']) {
+      for (final sender in ['BOA', 'Abyssinia', 'Boa Bank Of Abyssinia']) {
         expect(SmsParser.parse(sender, 'You received ETB 30.00.'), isNotNull);
+      }
+      for (final sender in ['COOPay', 'EBIRR', 'COOPayEBIRR']) {
+        final result = SmsParser.parse(sender, 'You received ETB 30.00.');
+        expect(result, isNotNull);
+        expect(result!.institution, 'Coopay');
       }
       for (final sender in ['Dashen', 'dashenbank']) {
         expect(SmsParser.parse(sender, 'You received ETB 30.00.'), isNotNull);
